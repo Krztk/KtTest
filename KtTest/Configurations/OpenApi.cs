@@ -25,6 +25,11 @@ namespace KtTest.Configurations
                 });
                 options.CustomSchemaIds(x => x.FullName);
                 options.OperationFilter<AuthorizeCheckOperationFilter>();
+                options.UseOneOfForPolymorphism();
+                options.SelectSubTypesUsing(baseType =>
+                {
+                    return typeof(Startup).Assembly.GetTypes().Where(type => type.IsSubclassOf(baseType));
+                });
             });
         }
     }
