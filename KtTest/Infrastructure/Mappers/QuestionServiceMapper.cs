@@ -25,7 +25,7 @@ namespace KtTest.Infrastructure.Mappers
                 {
                     Question = question.Content,
                     ChoiceAnswerType = choiceAnswer.ChoiceAnswerType,
-                    Choices = choiceAnswer.Choices.Select(x => x.Text).ToList(),
+                    Choices = choiceAnswer.Choices.Select(x => x.Content).ToList(),
                     Id = question.Id
                 };
             }
@@ -69,7 +69,7 @@ namespace KtTest.Infrastructure.Mappers
                     bool userAnswer = (numericValue & 1) != 0;
                     numericValue >>= 1;
                     var choice = choiceAnswer.Choices[numberOfChoices - 1 - i];
-                    var choiceWithAnswer = new Dtos.Test.ChoiceDto { Correct = choice.Valid, UserAnswer = userAnswer, Value = choice.Text };
+                    var choiceWithAnswer = new Dtos.Test.ChoiceDto { Correct = choice.Valid, UserAnswer = userAnswer, Value = choice.Content };
                     choices.Add(choiceWithAnswer);
                 }
 
@@ -123,7 +123,7 @@ namespace KtTest.Infrastructure.Mappers
                     ChoiceAnswerType = choiceAnswer.ChoiceAnswerType,
                     Categories = question.QuestionCategories.Select(x => x.CategoryId).ToList(),
                     Question = question.Content,
-                    Choices = choiceAnswer.Choices.Select(x => new Dtos.Wizard.ChoiceDto { Valid = x.Valid, Value = x.Text }).ToList()
+                    Choices = choiceAnswer.Choices.Select(x => new Dtos.Wizard.ChoiceDto { Valid = x.Valid, Content = x.Content }).ToList()
                 };
             }
             else
@@ -137,7 +137,7 @@ namespace KtTest.Infrastructure.Mappers
             if (dto is Dtos.Wizard.QuestionWithChoiceAnswersDto choiceAnswer)
             {
                 var choices = choiceAnswer.Choices
-                    .Select(x => new Choice { Text = x.Value, Valid = x.Valid })
+                    .Select(x => new Choice { Content = x.Content, Valid = x.Valid })
                     .ToList();
 
                 answer = new ChoiceAnswer(choices, choiceAnswer.ChoiceAnswerType);

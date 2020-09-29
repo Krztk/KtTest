@@ -23,9 +23,9 @@ namespace KtTest.Tests.ModelTests
         {
             var choices = new List<Choice>
             {
-                new Choice {Text = "1", Valid = true},
-                new Choice {Text = "2", Valid = false},
-                new Choice {Text = "3", Valid = false},
+                new Choice {Content = "1", Valid = true},
+                new Choice {Content = "2", Valid = false},
+                new Choice {Content = "3", Valid = false},
             };
             Answer answer = new ChoiceAnswer(choices, ChoiceAnswerType.SingleChoice);
             Action act = () => answer.ValidateAnswer(new WrittenUserAnswer("written answer"));

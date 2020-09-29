@@ -167,10 +167,10 @@ namespace KtTest.Tests.ServiceTests
                     new ChoiceAnswer(
                         new List<Choice>
                         {
-                            new Choice {Text = "4", Valid = true},
-                            new Choice {Text = "5", Valid = false},
-                            new Choice {Text = "6", Valid = false},
-                            new Choice {Text = "92", Valid = true},
+                            new Choice {Content = "4", Valid = true},
+                            new Choice {Content = "5", Valid = false},
+                            new Choice {Content = "6", Valid = false},
+                            new Choice {Content = "92", Valid = true},
                         },
                         ChoiceAnswerType.MultipleChoice),
                     authorId)

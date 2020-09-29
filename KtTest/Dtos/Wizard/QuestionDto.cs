@@ -25,7 +25,7 @@ namespace KtTest.Dtos.Wizard
 
     public class ChoiceDto
     { 
-        public string Value { get; set; }
+        public string Content { get; set; }
         public bool Valid { get; set; }
     }
 

@@ -14,10 +14,10 @@ namespace KtTest.Tests.ModelTests
                 new List<Choice>
                 {
                     //{ true, true, false, true }; => 1101 => 13
-                    new Choice { Text = "Choice 1", Valid = true },
-                    new Choice { Text = "Choice 2", Valid = true },
-                    new Choice { Text = "Choice 3", Valid = false },
-                    new Choice { Text = "Choice 4", Valid = true },
+                    new Choice { Content = "Choice 1", Valid = true },
+                    new Choice { Content = "Choice 2", Valid = true },
+                    new Choice { Content = "Choice 3", Valid = false },
+                    new Choice { Content = "Choice 4", Valid = true },
                 },
                 ChoiceAnswerType.SingleChoice,
                 13
@@ -27,10 +27,10 @@ namespace KtTest.Tests.ModelTests
                 new List<Choice>
                 {
                     //{ false, false, false, true }; => 0001 => 1
-                    new Choice { Text = "Choice 1", Valid = false },
-                    new Choice { Text = "Choice 2", Valid = false },
-                    new Choice { Text = "Choice 3", Valid = false },
-                    new Choice { Text = "Choice 4", Valid = true },
+                    new Choice { Content = "Choice 1", Valid = false },
+                    new Choice { Content = "Choice 2", Valid = false },
+                    new Choice { Content = "Choice 3", Valid = false },
+                    new Choice { Content = "Choice 4", Valid = true },
                 },
                 ChoiceAnswerType.SingleChoice,
                 1
@@ -40,10 +40,10 @@ namespace KtTest.Tests.ModelTests
                 new List<Choice>
                 {
                     //{ false, false, false, true }; => 1001 => 9
-                    new Choice { Text = "Choice 1", Valid = true },
-                    new Choice { Text = "Choice 2", Valid = false },
-                    new Choice { Text = "Choice 3", Valid = false },
-                    new Choice { Text = "Choice 4", Valid = true },
+                    new Choice { Content = "Choice 1", Valid = true },
+                    new Choice { Content = "Choice 2", Valid = false },
+                    new Choice { Content = "Choice 3", Valid = false },
+                    new Choice { Content = "Choice 4", Valid = true },
                 },
                 ChoiceAnswerType.MultipleChoice,
                 9

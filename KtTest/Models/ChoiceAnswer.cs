@@ -52,7 +52,7 @@ namespace KtTest.Models
     {
         public int Id { get; set; }
         public int ChoiceAnswerId { get; set; }
-        public string Text { get; set; }
+        public string Content { get; set; }
         public bool Valid { get; set; }
     }
 }
