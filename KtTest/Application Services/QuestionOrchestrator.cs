@@ -13,13 +13,17 @@ namespace KtTest.Application_Services
     {
         private readonly QuestionService questionService;
         private readonly CategoryService categoryService;
+        private readonly TestService testService;
         private readonly QuestionServiceMapper questionMapper;
+        private readonly IUserContext userContext;
 
-        public QuestionOrchestrator(QuestionService questionService, CategoryService categoryService, QuestionServiceMapper questionMapper)
+        public QuestionOrchestrator(QuestionService questionService, CategoryService categoryService, TestService testService, QuestionServiceMapper questionMapper, IUserContext userContext)
         {
             this.questionService = questionService;
             this.categoryService = categoryService;
+            this.testService = testService;
             this.questionMapper = questionMapper;
+            this.userContext = userContext;
         }
 
         public async Task<PaginatedResult<QuestionDto>> GetQuestions(Pagination pagination)
@@ -42,6 +46,27 @@ namespace KtTest.Application_Services
 
             result.Data = await questionService.CreateQuestion(questionDto.Question, answer, questionDto.Categories);
             return result;
+        }
+
+        public async Task<OperationResult> UpdateQuestion(int questionId, QuestionDto questionDto)
+        {
+            var result = new OperationResult();
+
+            var isQuestionAuthor = await questionService.IsAuthorOfQuestion(userContext.UserId, questionId);
+            if (!isQuestionAuthor)
+            {
+                result.AddFailure(Failure.BadRequest());
+                return result;
+            }
+
+            if (await testService.HasTestWithQuestionStarted(questionId))
+            {
+                result.AddFailure(Failure.BadRequest("Cannot edit the question if there is a test which contains it that has already started"));
+                return result;
+            }
+
+            Answer answer = questionMapper.MapToAnswer(questionDto);
+            return await questionService.UpdateQuestion(questionId, questionDto.Question, answer, questionDto.Categories);
         }
     }
 }

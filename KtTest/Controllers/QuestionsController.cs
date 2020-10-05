@@ -26,6 +26,13 @@ namespace KtTest.Controllers
             return ActionResult(result);
         }
 
+        [HttpPost("{id}")]
+        public async Task<IActionResult> UpdateQuestion(int id, QuestionDto questionDto)
+        {
+            var result = await questionOrchestrator.UpdateQuestion(id, questionDto);
+            return ActionResult(result);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetQuestions([FromQuery]Pagination pagination)
         {

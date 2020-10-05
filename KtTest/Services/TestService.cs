@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace KtTest.Services
@@ -185,7 +186,7 @@ namespace KtTest.Services
             }
 
             var query = from userTest in dbContext.UserTests.Where(x => x.TestId == testId && x.StartDate.HasValue)
-                        from user in dbContext.Users.Where(x=>x.Id == userTest.UserId)
+                        from user in dbContext.Users.Where(x => x.Id == userTest.UserId)
                         from userAnswer in dbContext.UserAnswers.Where(ua => ua.TestId == userTest.TestId && ua.UserId == userTest.UserId).DefaultIfEmpty()
                         from answer in dbContext.Answers.Where(an => an.QuestionId == userAnswer.QuestionId).DefaultIfEmpty()
                         select new { userTest, user, userAnswer, answer };
@@ -235,7 +236,7 @@ namespace KtTest.Services
             result.Data = groupResults;
             return result;
         }
-        
+
         public async Task<OperationResult> AddUserAnswers(int testId, List<UserAnswer> userAnswers)
         {
             var result = new OperationResult();
@@ -463,6 +464,14 @@ namespace KtTest.Services
             var testResults = new TestResults(testId, testEndedResult.Data, questionResults.Values.ToList());
             result.Data = testResults;
             return result;
+        }
+
+        public async Task<bool> HasTestWithQuestionStarted(int questionId)
+        {
+            return await dbContext.Tests
+                .Include(x => x.TestItems)
+                .Where(x => x.StartDate <= dateTimeProvider.UtcNow && x.TestItems.Any(x => x.QuestionId == questionId))
+                .CountAsync() > 0;
         }
 
         private bool CanAddAnswers(DateTime? startTestDate, int testDuration)

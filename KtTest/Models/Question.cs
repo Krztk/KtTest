@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace KtTest.Models
 {
@@ -21,6 +22,15 @@ namespace KtTest.Models
             Content = content;
             Answer = answer;
             AuthorId = authorId;
+        }
+
+        public void ReplaceCategories(IEnumerable<int> categoryIds)
+        {
+            QuestionCategories.Clear();
+            foreach (var categoryId in categoryIds)
+            {
+                QuestionCategories.Add(new QuestionCategory { CategoryId = categoryId });
+            }
         }
     }
 }

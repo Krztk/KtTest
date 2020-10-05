@@ -1,7 +1,9 @@
-﻿using KtTest.Infrastructure.Data;
+﻿using KtTest.Exceptions.ServiceExcepctions;
+using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,15 +24,28 @@ namespace KtTest.Services
         public async Task<int> CreateQuestion(string content, Answer answer, IEnumerable<int> categoryIds)
         {
             var authorId = userContext.UserId;
-
             var question = new Question(content, answer, authorId);
-
             foreach (var categoryId in categoryIds)
                 question.QuestionCategories.Add(new QuestionCategory { CategoryId = categoryId });
 
             dbContext.Questions.Add(question);
             await dbContext.SaveChangesAsync();
             return question.Id;
+        }
+
+        public async Task<OperationResult> UpdateQuestion(int questionId, string content, Answer answer, IEnumerable<int> categoryIds)
+        {
+            var question = dbContext.Questions.Local.FirstOrDefault(x => x.Id == questionId);
+            if (question == null)
+                throw new ValueNotInTheCacheException("When this method is executed, the question should already be loaded.");
+
+            question.Content = content;
+            if (categoryIds != null)
+                question.ReplaceCategories(categoryIds);
+
+            question.Answer = answer;
+            await dbContext.SaveChangesAsync();
+            return new OperationResult();
         }
 
         public async Task<PaginatedResult<Question>> GetQuestions(int offset, int limit)
@@ -58,6 +73,21 @@ namespace KtTest.Services
                 .ToHashSet();
 
             return questionIds.All(x => questionIdsFromDb.Contains(x));
+        }
+
+        public async Task<bool> IsAuthorOfQuestion(int userId, int questionId)
+        {
+            var question = await dbContext.Questions
+                    .Include(x => x.Answer)
+                        .ThenInclude(x => ((ChoiceAnswer)x).Choices)
+                    .Include(x => x.QuestionCategories)
+                    .Where(x => x.Id == questionId)
+                    .FirstOrDefaultAsync();
+
+            if (question == null)
+                return false;
+
+            return question.AuthorId == userId;
         }
     }
 }
