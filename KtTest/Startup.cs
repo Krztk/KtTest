@@ -33,7 +33,12 @@ namespace KtTest
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<AppDbContext>(options =>
+            services.AddDbContextPool<AppDbContext>(options =>
+                options.UseSqlServer(
+                Configuration.GetConnectionString("DefaultConnection"))
+                .EnableSensitiveDataLogging());
+
+            services.AddDbContextPool<ReadOnlyAppDbContext>(options =>
                 options.UseSqlServer(
                 Configuration.GetConnectionString("DefaultConnection"))
                 .EnableSensitiveDataLogging());
