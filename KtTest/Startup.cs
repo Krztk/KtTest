@@ -8,6 +8,7 @@ using KtTest.Infrastructure.Identity;
 using KtTest.Infrastructure.JsonConverters;
 using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
+using KtTest.Readers;
 using KtTest.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -114,6 +115,8 @@ namespace KtTest
             services.AddSingleton<QuestionServiceMapper, QuestionServiceMapper>();
             services.AddSingleton<TestServiceMapper, TestServiceMapper>();
             services.AddSingleton<CategoryServiceMapper, CategoryServiceMapper>();
+
+            services.AddTransient<QuestionReader, QuestionReader>();
 
             services.AddOpenAPI();
         }

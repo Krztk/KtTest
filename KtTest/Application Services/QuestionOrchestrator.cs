@@ -1,10 +1,9 @@
 ﻿using KtTest.Dtos.Wizard;
 using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
+using KtTest.Readers;
 using KtTest.Results;
 using KtTest.Services;
-using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace KtTest.Application_Services
@@ -15,14 +14,21 @@ namespace KtTest.Application_Services
         private readonly CategoryService categoryService;
         private readonly TestService testService;
         private readonly QuestionServiceMapper questionMapper;
+        private readonly QuestionReader questionReader;
         private readonly IUserContext userContext;
 
-        public QuestionOrchestrator(QuestionService questionService, CategoryService categoryService, TestService testService, QuestionServiceMapper questionMapper, IUserContext userContext)
+        public QuestionOrchestrator(QuestionService questionService,
+            CategoryService categoryService,
+            TestService testService,
+            QuestionServiceMapper questionMapper,
+            QuestionReader questionReader,
+            IUserContext userContext)
         {
             this.questionService = questionService;
             this.categoryService = categoryService;
             this.testService = testService;
             this.questionMapper = questionMapper;
+            this.questionReader = questionReader;
             this.userContext = userContext;
         }
 
@@ -46,6 +52,11 @@ namespace KtTest.Application_Services
 
             result.Data = await questionService.CreateQuestion(questionDto.Question, answer, questionDto.Categories);
             return result;
+        }
+
+        public async Task<PaginatedResult<QuestionHeaderDto>> GetQuestionHeaders(Pagination pagination)
+        {
+            return await questionReader.GetQuestionHeaders(userContext.UserId, pagination.Offset, pagination.Limit);
         }
 
         public async Task<OperationResult> UpdateQuestion(int questionId, QuestionDto questionDto)
