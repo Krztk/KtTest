@@ -73,5 +73,31 @@ namespace KtTest.Readers
             result.Data = new Paginated<QuestionDto>(limit, questions);
             return result;
         }
+
+        public async Task<OperationResult<QuestionDto>> GetQuestion(int authorId, int questionId)
+        {
+            var question = await dbContext.Questions
+                .Where(x => x.Id == questionId)
+                .Include(x => x.Answer)
+                    .ThenInclude(x => ((ChoiceAnswer)x).Choices)
+                .Select(x => new { QuestionDto = questionMapper.MapToWizardQuestionDto(x), x.AuthorId })
+                .FirstOrDefaultAsync();
+
+            var result = new OperationResult<QuestionDto>();
+            if (question == null)
+            {
+                result.AddFailure(Failure.NotFound());
+                return result;
+            }
+
+            if (authorId != question.AuthorId)
+            {
+                result.AddFailure(Failure.Unauthorized());
+                return result;
+            }
+
+            result.Data = question.QuestionDto;
+            return result;
+        }
     }
 }

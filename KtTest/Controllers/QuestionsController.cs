@@ -33,6 +33,13 @@ namespace KtTest.Controllers
             return ActionResult(result);
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetQuestion(int id)
+        {
+            var result = await questionOrchestrator.GetQuestion(id);
+            return ActionResult(result);
+        }
+
         [HttpGet]
         public IActionResult GetQuestions([FromQuery]Pagination pagination)
         {

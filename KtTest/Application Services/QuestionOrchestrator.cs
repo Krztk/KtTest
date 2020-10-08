@@ -4,6 +4,7 @@ using KtTest.Models;
 using KtTest.Readers;
 using KtTest.Results;
 using KtTest.Services;
+using System;
 using System.Threading.Tasks;
 
 namespace KtTest.Application_Services
@@ -35,6 +36,11 @@ namespace KtTest.Application_Services
         public PaginatedResult<QuestionDto> GetQuestions(Pagination pagination)
         {
             return questionReader.GetQuestions(userContext.UserId, pagination.Offset, pagination.Limit);
+        }
+
+        public async Task<OperationResult<QuestionDto>> GetQuestion(int questionId)
+        {
+            return await questionReader.GetQuestion(userContext.UserId, questionId);
         }
 
         public async Task<OperationResult<int>> CreateQuestion(QuestionDto questionDto)
