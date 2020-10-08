@@ -1,6 +1,5 @@
 ﻿using KtTest.Application_Services;
 using KtTest.Dtos.Wizard;
-using KtTest.Models;
 using KtTest.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,9 +34,9 @@ namespace KtTest.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetQuestions([FromQuery]Pagination pagination)
+        public IActionResult GetQuestions([FromQuery]Pagination pagination)
         {
-            var result = await questionOrchestrator.GetQuestions(pagination);
+            var result = questionOrchestrator.GetQuestions(pagination);
             return ActionResult(result);
         }
 

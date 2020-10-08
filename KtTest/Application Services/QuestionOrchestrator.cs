@@ -32,10 +32,9 @@ namespace KtTest.Application_Services
             this.userContext = userContext;
         }
 
-        public async Task<PaginatedResult<QuestionDto>> GetQuestions(Pagination pagination)
+        public PaginatedResult<QuestionDto> GetQuestions(Pagination pagination)
         {
-            var result = await questionService.GetQuestions(pagination.Offset, pagination.Limit);
-            return result.MapResult(x => questionMapper.MapToWizardQuestionDto(x));
+            return questionReader.GetQuestions(userContext.UserId, pagination.Offset, pagination.Limit);
         }
 
         public async Task<OperationResult<int>> CreateQuestion(QuestionDto questionDto)
