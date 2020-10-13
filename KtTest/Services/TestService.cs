@@ -193,7 +193,6 @@ namespace KtTest.Services
 
             var data = await query.ToListAsync();
 
-            //var userIdValidAnswers = new Dictionary<int, int>();
             var userIdUserTestResult = new Dictionary<int, UserTestResult>();
             foreach (var d in data)
             {

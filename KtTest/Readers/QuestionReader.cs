@@ -46,6 +46,7 @@ namespace KtTest.Readers
                 {
                     var questionHeaderDto = new QuestionHeaderDto
                     {
+                        Id = question.Id,
                         Content = question.Content,
                         NumberOfTimesUsedInTests = question.TestItem == null ? 0 : 1
                     };
