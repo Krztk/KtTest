@@ -14,13 +14,15 @@ namespace KtTest.Services
         private readonly AppDbContext dbContext;
         private readonly IUserContext userContext;
         private readonly IRegistrationCodeGenerator codeGenerator;
+        private readonly IDateTimeProvider dateTimeProvider;
         private readonly IEmailSender emailSender;
 
-        public OrganizationService(AppDbContext dbContext, IUserContext userContext, IRegistrationCodeGenerator codeGenerator, IEmailSender emailSender)
+        public OrganizationService(AppDbContext dbContext, IUserContext userContext, IRegistrationCodeGenerator codeGenerator, IDateTimeProvider dateTimeProvider, IEmailSender emailSender)
         {
             this.dbContext = dbContext;
             this.userContext = userContext;
             this.codeGenerator = codeGenerator;
+            this.dateTimeProvider = dateTimeProvider;
             this.emailSender = emailSender;
         }
         public async Task<OperationResult> CreateRegistrationInvitation(string email, bool isTeacher)
@@ -31,7 +33,8 @@ namespace KtTest.Services
                 Code = code,
                 Email = email,
                 IsTeacher = isTeacher,
-                InvitedBy = userContext.UserId
+                InvitedBy = userContext.UserId,
+                Date = dateTimeProvider.UtcNow
             };
 
             dbContext.Invitations.Add(invitation);

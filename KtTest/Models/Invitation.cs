@@ -12,5 +12,6 @@ namespace KtTest.Models
         public bool IsTeacher { get; set; }
         public string Code { get; set; }
         public int InvitedBy { get; set; }
+        public DateTime Date { get; set; }
     }
 }
