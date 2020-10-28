@@ -27,5 +27,19 @@ namespace KtTest.Controllers
             var result = await organizationOrchestrator.InviteUser(dto);
             return ActionResult(result);
         }
+
+        [HttpGet("members")]
+        public IActionResult GetOrganizationMembers()
+        {
+            var result = organizationOrchestrator.GetOrganizationMembers();
+            return Ok(result);
+        }
+
+        [HttpGet("invitations")]
+        public IActionResult GetInvitations()
+        {
+            var result = organizationOrchestrator.GetInvitations();
+            return Ok(result);
+        }
     }
 }

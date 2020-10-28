@@ -115,8 +115,10 @@ namespace KtTest
             services.AddSingleton<QuestionServiceMapper, QuestionServiceMapper>();
             services.AddSingleton<TestServiceMapper, TestServiceMapper>();
             services.AddSingleton<CategoryServiceMapper, CategoryServiceMapper>();
+            services.AddSingleton<OrganizationServiceMapper, OrganizationServiceMapper>();
 
             services.AddTransient<QuestionReader, QuestionReader>();
+            services.AddTransient<OrganizationReader, OrganizationReader>();
 
             services.AddOpenAPI();
         }
