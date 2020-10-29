@@ -46,6 +46,9 @@ namespace KtTest.Services
 
         public async Task<bool> IsUserMemberOfOrganization(int ownerId, int userId)
         {
+            if (ownerId == userId)
+                return true;
+
             return await dbContext.Users.Where(x => x.Id == userId && x.InvitedBy == ownerId).CountAsync() > 0;
         }
 
@@ -63,6 +66,20 @@ namespace KtTest.Services
                 return result;
             }
             result.Data = user;
+            return result;
+        }
+
+        public async Task<OperationResult<int>> GetIdOfGroupOwner(int groupId)
+        {
+            var group = await dbContext.Groups.Where(x => x.Id == groupId).FirstOrDefaultAsync();
+            var result = new OperationResult<int>();
+            if (group == null)
+            {
+                result.AddFailure(Failure.BadRequest());
+                return result;
+            }
+
+            result.Data = group.OwnerId;
             return result;
         }
     }

@@ -1,9 +1,5 @@
 ﻿using KtTest.Dtos.Organizations;
 using KtTest.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace KtTest.Infrastructure.Mappers
 {
@@ -24,6 +20,7 @@ namespace KtTest.Infrastructure.Mappers
         {
             return new InvitationDto
             {
+                Id = invitation.Id,
                 Email = invitation.Email,
                 Date = invitation.Date,
                 IsTeacher = invitation.IsTeacher

@@ -7,6 +7,7 @@ namespace KtTest.Dtos.Organizations
 {
     public class InvitationDto
     {
+        public int Id { get; set; }
         public string Email { get; set; }
         public bool IsTeacher { get; set; }
         public DateTime Date { get; set; }

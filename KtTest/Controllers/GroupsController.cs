@@ -2,9 +2,6 @@
 using KtTest.Dtos.Groups;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace KtTest.Controllers
@@ -19,6 +16,20 @@ namespace KtTest.Controllers
         public GroupsController(GroupOrchestrator groupOrchestrator)
         {
             this.groupOrchestrator = groupOrchestrator;
+        }
+
+        [HttpGet]
+        public IActionResult GetGroups()
+        {
+            var result = groupOrchestrator.GetGroups();
+            return Ok(result);
+        }
+
+        [HttpGet("{id}/members")]
+        public async Task<IActionResult> GetGroupMembers(int id)
+        {
+            var result = await groupOrchestrator.GetGroupMembers(id);
+            return ActionResult(result);
         }
 
         [HttpPost]
