@@ -3,10 +3,8 @@ using KtTest.Dtos.Organizations;
 using KtTest.Infrastructure.Data;
 using KtTest.Infrastructure.Mappers;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace KtTest.Readers
 {
@@ -38,6 +36,14 @@ namespace KtTest.Readers
                 .Include(x => x.User)
                 .Where(x => x.GroupId == groupId)
                 .Select(x => x.User)
+                .Select(organizationMapper.MapToUserDto)
+                .ToList();
+        }
+
+        public List<UserDto> GetAvailableUsers(int groupId, int organizationOwner)
+        {
+            return dbContext.Users
+                .Where(x => x.InvitedBy == organizationOwner && !x.GroupMembers.Any(x=>x.GroupId == groupId))
                 .Select(organizationMapper.MapToUserDto)
                 .ToList();
         }

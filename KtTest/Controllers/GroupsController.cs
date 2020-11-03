@@ -32,6 +32,13 @@ namespace KtTest.Controllers
             return ActionResult(result);
         }
 
+        [HttpGet("{id}/available")]
+        public async Task<IActionResult> GetAvailableUsers(int id)
+        {
+            var result = await groupOrchestrator.GetAvailableUsers(id);
+            return ActionResult(result);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateGroup(CreateGroupDto createGroupDto)
         {

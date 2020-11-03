@@ -3,9 +3,7 @@ using KtTest.Dtos.Organizations;
 using KtTest.Readers;
 using KtTest.Results;
 using KtTest.Services;
-using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 
 namespace KtTest.Application_Services
@@ -48,6 +46,27 @@ namespace KtTest.Application_Services
             }
 
             result.Data = groupReader.GetGroupMembers(groupId);
+            return result;
+        }
+
+        public async Task<OperationResult<List<UserDto>>> GetAvailableUsers(int groupId)
+        {
+            var userId = userContext.UserId;
+            var getIdOfGroupOwnerResult = await organizationService.GetIdOfGroupOwner(groupId);
+            if (!getIdOfGroupOwnerResult.Succeeded)
+                return getIdOfGroupOwnerResult.MapResult<List<UserDto>>();
+
+            var isMember = await organizationService
+                .IsUserMemberOfOrganization(getIdOfGroupOwnerResult.Data, userId);
+
+            var result = new OperationResult<List<UserDto>>();
+            if (!isMember)
+            {
+                result.AddFailure(Failure.BadRequest());
+                return result;
+            }
+
+            result.Data = groupReader.GetAvailableUsers(groupId, getIdOfGroupOwnerResult.Data);
             return result;
         }
 
