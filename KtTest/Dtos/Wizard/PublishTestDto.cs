@@ -21,7 +21,7 @@ namespace KtTest.Dtos.Wizard
         {
             RuleFor(x => x.StartDate).NotEmpty();
             RuleFor(x => x.EndDate).NotEmpty();
-            RuleFor(x => x.DurationInMinutes).GreaterThan(DataConstraints.Test.MinDuration);
+            RuleFor(x => x.DurationInMinutes).GreaterThanOrEqualTo(DataConstraints.Test.MinDuration);
             RuleFor(x => x.GroupId).NotEmpty();
         }
     }
