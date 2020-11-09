@@ -19,7 +19,7 @@ namespace KtTest.Tests.ModelTests
                     new Choice { Content = "Choice 3", Valid = false },
                     new Choice { Content = "Choice 4", Valid = true },
                 },
-                ChoiceAnswerType.SingleChoice,
+                ChoiceAnswerType.MultipleChoice,
                 13
             };
             yield return new object[]
