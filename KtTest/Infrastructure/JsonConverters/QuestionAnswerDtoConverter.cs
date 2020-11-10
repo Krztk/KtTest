@@ -1,16 +1,18 @@
 ﻿using KtTest.Dtos.Test;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace KtTest.Infrastructure.JsonConverters
 {
     public class QuestionAnswerDtoConverter : JsonConverter<QuestionAnswerDto>
     {
+        enum AnswerType
+        {
+            Written,
+            Choice,
+        }
+
         public override bool CanConvert(Type typeToConvert) =>
             typeof(QuestionAnswerDto).IsAssignableFrom(typeToConvert);
 
@@ -20,66 +22,52 @@ namespace KtTest.Infrastructure.JsonConverters
             {
                 throw new JsonException();
             }
+            string text = string.Empty;
+            int value = 0;
+            int? questionId = null;
+            AnswerType? answerType = null;
 
-            reader.Read();
-            if (reader.TokenType != JsonTokenType.PropertyName)
+            while (reader.Read())
             {
-                throw new JsonException();
+                if (reader.TokenType == JsonTokenType.EndObject)
+                {
+                    if (!questionId.HasValue) throw new JsonException();
+                    QuestionAnswerDto answerDto = answerType switch
+                    {
+                        AnswerType.Choice => new ChoiceAnswerDto { QuestionId = questionId.Value, Value = value },
+                        AnswerType.Written => new WrittenAnswerDto { QuestionId = questionId.Value, Text = text },
+                        _ => throw new JsonException()
+                    };
+                    return answerDto;
+                }
+
+                if (reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    string propertyName = reader.GetString();
+                    reader.Read();
+                    switch (propertyName)
+                    {
+                        case "text":
+                            text = reader.GetString();
+                            if (answerType.HasValue)
+                                throw new JsonException();
+
+                            answerType = AnswerType.Written;
+                            break;
+                        case "value":
+                            value = reader.GetInt32();
+                            if (answerType.HasValue)
+                                throw new JsonException();
+
+                            answerType = AnswerType.Choice;
+                            break;
+                        case "q":
+                            questionId = reader.GetInt32();
+                            break;
+                    }
+                }
             }
-
-            string propertyName = reader.GetString();
-            if (propertyName != "text" && propertyName != "value")
-            {
-                throw new JsonException();
-            }
-
-            QuestionAnswerDto dto;
-
-            reader.Read();
-            if (propertyName == "text")
-            {
-                if (reader.TokenType != JsonTokenType.String)
-                    throw new JsonException();
-
-                var text = reader.GetString();
-                dto = new WrittenAnswerDto { Text = text };
-                
-            }
-            else if (propertyName == "value")
-            {
-                if (reader.TokenType != JsonTokenType.Number)
-                    throw new JsonException();
-                
-                var value = reader.GetInt32();
-                dto = new ChoiceAnswerDto { Value = value };
-            }
-            else
-                throw new JsonException();
-
-            reader.Read();
-
-            if (reader.TokenType != JsonTokenType.PropertyName)
-            {
-                throw new JsonException();
-            }
-
-            propertyName = reader.GetString();
-            if (propertyName != "q")
-                throw new JsonException();
-
-            reader.Read();
-
-            if (reader.TokenType != JsonTokenType.Number)
-                throw new JsonException();
-
-            var questionId = reader.GetInt32();
-            dto.QuestionId = questionId;
-
-            reader.Read();
-            if (reader.TokenType == JsonTokenType.EndObject)
-                return dto;
-            else
-                throw new JsonException();
+            throw new JsonException();
         }
 
         public override void Write(Utf8JsonWriter writer, QuestionAnswerDto value, JsonSerializerOptions options)

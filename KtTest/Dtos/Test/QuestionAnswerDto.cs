@@ -3,7 +3,7 @@ using KtTest.Infrastructure.Data;
 
 namespace KtTest.Dtos.Test
 {
-    public class QuestionAnswerDto
+    public abstract class QuestionAnswerDto
     {
         public int QuestionId { get; set; }
     }
