@@ -1,11 +1,7 @@
 ﻿using FluentAssertions;
 using KtTest.Dtos.Test;
 using KtTest.Infrastructure.JsonConverters;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using Xunit;
