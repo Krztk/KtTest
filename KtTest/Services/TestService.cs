@@ -203,7 +203,7 @@ namespace KtTest.Services
                     if (d.userTest.StartDate.HasValue && !CanAddAnswers(d.userTest.StartDate, test.Duration)
                         || !d.userTest.StartDate.HasValue && dateTimeProvider.UtcNow > test.EndDate.Value.AddMinutes(test.Duration))
                     {
-                        UserTestResult userTestResult = new UserTestResult(d.user.UserName, 0);
+                        UserTestResult userTestResult = new UserTestResult(d.user.UserName, 0, d.user.Id);
                         userIdUserTestResult.Add(userId, userTestResult);
                     }
 
@@ -220,7 +220,7 @@ namespace KtTest.Services
                         userIdUserTestResult[userId].NumberOfValidAnswers++;
                 }
                 else
-                    userIdUserTestResult.Add(userId, new UserTestResult(d.user.UserName, isCorrect ? 1 : 0));
+                    userIdUserTestResult.Add(userId, new UserTestResult(d.user.UserName, isCorrect ? 1 : 0, d.user.Id));
             }
 
             var groupResults = new GroupResults

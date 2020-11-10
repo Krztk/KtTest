@@ -1,9 +1,7 @@
 ﻿using KtTest.Dtos.Test;
 using KtTest.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace KtTest.Infrastructure.Mappers
 {
@@ -116,6 +114,7 @@ namespace KtTest.Infrastructure.Mappers
         {
             return new UserTestResultDto
             {
+                Id = result.Id,
                 NumberOfValidAnswers = result.NumberOfValidAnswers,
                 Username = result.Username,
             };

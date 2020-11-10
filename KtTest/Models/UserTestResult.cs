@@ -16,11 +16,13 @@ namespace KtTest.Models
 
     public class UserTestResult
     {
+        public int Id { get; set; }
         public string Username { get; set; }
         public int NumberOfValidAnswers { get; set; }
 
-        public UserTestResult(string username, int validAnswers)
+        public UserTestResult(string username, int validAnswers, int id)
         {
+            Id = id;
             Username = username;
             NumberOfValidAnswers = validAnswers;
         }

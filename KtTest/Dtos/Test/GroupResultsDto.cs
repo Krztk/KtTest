@@ -13,6 +13,7 @@ namespace KtTest.Dtos.Test
 
     public class UserTestResultDto
     {
+        public int Id { get; set; }
         public string Username { get; set; }
         public int NumberOfValidAnswers { get; set; }
     }
