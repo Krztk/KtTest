@@ -1,5 +1,4 @@
-﻿using KtTest.Dtos.Test;
-using KtTest.Infrastructure.Data;
+﻿using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace KtTest.Services
@@ -473,14 +471,10 @@ namespace KtTest.Services
                 .CountAsync() > 0;
         }
 
-        private bool CanAddAnswers(DateTime? startTestDate, int testDuration)
+        private bool CanAddAnswers(DateTime? userTestStartDate, int testDuration)
         {
-            if (!startTestDate.HasValue ||
-                startTestDate.Value.AddMinutes(testDuration) < dateTimeProvider.UtcNow)
-            {
-                return false;
-            }
-            return true;
+            return userTestStartDate.HasValue
+                && userTestStartDate.Value.AddMinutes(testDuration) > dateTimeProvider.UtcNow;
         }
     }
 }
