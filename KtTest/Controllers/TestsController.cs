@@ -4,7 +4,6 @@ using KtTest.Dtos.Wizard;
 using KtTest.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace KtTest.Controllers
@@ -22,41 +21,41 @@ namespace KtTest.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAvailableTests([FromQuery] Pagination pagination)
+        public IActionResult GetAvailableTests([FromQuery] Pagination pagination)
         {
-            var result = await testOrchestrator.GetAvailableAndUpcomingTests(pagination);
+            var result = testOrchestrator.GetAvailableAndUpcomingTests(pagination);
             return ActionResult(result);
         }
 
         [Authorize(Policy = "EmployeeOnly")]
         [HttpGet("wizard")]
-        public async Task<IActionResult> GetTests([FromQuery] Pagination pagination)
+        public IActionResult GetTests([FromQuery] Pagination pagination)
         {
-            var result = await testOrchestrator.GetTests(pagination);
+            var result = testOrchestrator.GetTestTemplates(pagination);
             return ActionResult(result);
         }
 
         [Authorize(Policy = "EmployeeOnly")]
         [HttpPost]
-        public async Task<IActionResult> CreateTest(CreateTestDto createTestDto)
+        public async Task<IActionResult> CreateTestTemplate(CreateTestDto createTestDto)
         {
-            var result = await testOrchestrator.CreateTest(createTestDto);
+            var result = await testOrchestrator.CreateTestTemplate(createTestDto);
             return ActionResult(result);
         }
 
         [Authorize(Policy = "EmployeeOnly")]
         [HttpPost("{id}/publish")]
-        public async Task<IActionResult> PublishTest(int id, PublishTestDto publishTestDto)
+        public async Task<IActionResult> ScheduleTest(int id, PublishTestDto publishTestDto)
         {
-            var result = await testOrchestrator.PublishTest(id, publishTestDto);
+            var result = await testOrchestrator.ScheduleTest(id, publishTestDto);
             return ActionResult(result);
         }
 
         [Authorize(Policy = "EmployeeOnly")]
         [HttpGet("wizard/{id}")]
-        public async Task<IActionResult> GetTestWizard(int id)
+        public IActionResult GetTestWizard(int id)
         {
-            var result = await testOrchestrator.GetTestWizard(id);
+            var result = testOrchestrator.GetTestWizard(id);
             return ActionResult(result);
         }
 

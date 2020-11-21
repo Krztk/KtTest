@@ -2,12 +2,11 @@
 using KtTest.Dtos.Wizard;
 using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
+using KtTest.Readers;
 using KtTest.Results;
 using KtTest.Services;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace KtTest.Application_Services
@@ -17,7 +16,7 @@ namespace KtTest.Application_Services
         private readonly QuestionService questionService;
         private readonly TestService testService;
         private readonly GroupService groupService;
-        private readonly QuestionServiceMapper questionMapper;
+        private readonly TestReader testReader;
         private readonly TestServiceMapper testMapper;
         private readonly IUserContext userContext;
         private readonly IDateTimeProvider dateTimeProvider;
@@ -25,7 +24,7 @@ namespace KtTest.Application_Services
         public TestOrchestrator(QuestionService questionService,
             TestService testService,
             GroupService groupService,
-            QuestionServiceMapper questionMapper,
+            TestReader testReader,
             TestServiceMapper testMapper,
             IUserContext userContext,
             IDateTimeProvider dateTimeProvider)
@@ -33,13 +32,13 @@ namespace KtTest.Application_Services
             this.questionService = questionService;
             this.testService = testService;
             this.groupService = groupService;
-            this.questionMapper = questionMapper;
+            this.testReader = testReader;
             this.testMapper = testMapper;
             this.userContext = userContext;
             this.dateTimeProvider = dateTimeProvider;
         }
 
-        public async Task<OperationResult<int>> CreateTest(Dtos.Wizard.CreateTestDto testDto)
+        public async Task<OperationResult<int>> CreateTestTemplate(Dtos.Wizard.CreateTestDto testDto)
         {
             var result = new OperationResult<int>();
 
@@ -50,27 +49,25 @@ namespace KtTest.Application_Services
                 return result;
             }
 
-            result = await testService.CreateTest(testDto.Name, testDto.QuestionIds);
+            result = await testService.CreateTestTemplate(testDto.Name, testDto.QuestionIds);
             return result;
         }
 
-        public async Task<PaginatedResult<Dtos.Test.TestHeaderDto>> GetAvailableAndUpcomingTests(Pagination pagination)
+        public PaginatedResult<Dtos.Test.TestHeaderDto> GetAvailableAndUpcomingTests(Pagination pagination)
         {
-            var result = await testService.GetAvailableAndUpcomingTests(pagination.Offset, pagination.Limit);
-            return result.MapResult(testMapper.MapToTestHeaderDto);
+            return testReader.GetAvailableAndUpcomingTests(userContext.UserId, pagination.Offset, pagination.Limit);
         }
 
-        public async Task<PaginatedResult<Dtos.Wizard.TestHeaderDto>> GetTests(Pagination pagination)
+        public PaginatedResult<Dtos.Wizard.TestTemplateHeaderDto> GetTestTemplates(Pagination pagination)
         {
             pagination ??= new Pagination(offset: 0, limit: 25);
-            var result = await testService.GetTests(pagination.Offset, pagination.Limit);
-            return result.MapResult(testMapper.MapToTestWizardHeaderDto);
+            return testReader.GetTestTemplateHeaders(userContext.UserId, pagination.Offset, pagination.Limit);
+
         }
 
-        public async Task<OperationResult<Dtos.Wizard.TestDto>> GetTestWizard(int id)
+        public OperationResult<Dtos.Wizard.TestTemplateDto> GetTestWizard(int id)
         {
-            var result = await testService.GetTest(id, userContext.UserId);
-            return result.MapResult(testMapper.MapToTestWizardDto);
+            return testReader.GetTestTemplate(id, userContext.UserId);
         }
 
         public async Task<OperationResult<TestResultsDto>> GetTestResult(int testId)
@@ -93,36 +90,7 @@ namespace KtTest.Application_Services
                 return result;
             }
 
-            var getTestResult = await testService.GetTest(testId);
-            if (!getTestResult.Succeeded)
-            {
-                return getTestResult.MapResult<TestResultsDto>();
-            }
-            var test = getTestResult.Data;
-
-            var getAnswersResult = await testService.GetAnswers(testId, userContext.UserId);
-            if (!getAnswersResult.Succeeded)
-            {
-                return getAnswersResult.MapResult<TestResultsDto>();
-            }
-
-            var userAnswers = getAnswersResult.Data.ToDictionary(x => x.QuestionId);
-            var questionsWithResult = new List<QuestionWithResultDto>();
-            foreach (var testItem in test.TestItems)
-            {
-
-                QuestionWithResultDto dto = questionMapper.MapToTestQuestionWithResultDto(testItem.Question, userAnswers[testItem.QuestionId]);
-                questionsWithResult.Add(dto);
-            }
-
-            var testResultsDto = new TestResultsDto
-            {
-                Name = test.Name,
-                QuestionsWithResult = questionsWithResult
-            };
-
-            result.Data = testResultsDto;
-            return result;
+            return await testReader.GetTestResultsDto(testId);
         }
 
         public async Task<OperationResult<GroupResultsDto>> GetTestResultTeacher(int testId)
@@ -133,8 +101,21 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<Dtos.Test.TestDto>> GetTest(int id)
         {
-            var result = await testService.GetTestForStudent(id, userContext.UserId);
-            return result.MapResult(testMapper.MapToTestDto);
+            var canGetTestResult = await testService.CanGetTest(id, userContext.UserId);
+            if (!canGetTestResult.Succeeded)
+            {
+                return canGetTestResult.MapResult<Dtos.Test.TestDto>();
+            }
+
+            if (!canGetTestResult.Data)
+            {
+                var result = new OperationResult<Dtos.Test.TestDto>();
+                result.AddFailure(Failure.BadRequest());
+                return result;
+            }
+
+            testService.MarkTestAsStartedIfItHasntBeenMarkedAlready(id, userContext.UserId);
+            return await testReader.GetTest(id);
         }
 
         public async Task<OperationResult> AddUserAnswers(int testId, SendTestAnswersDto dto)
@@ -157,18 +138,18 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<List<QuestionAnswerDto>>> GetUserAnswers(int testId)
         {
-            int userId = userContext.UserId;
-            var result = await testService.GetAnswers(testId, userId);
-            return result.MapResult(x => x.Select(y => questionMapper.MapToTestQuestionAnswerDto(y)).ToList());
+            var testTaken = await testService.HasUserTakenTest(testId, userContext.UserId);
+            if (!testTaken)
+            {
+                var result = new OperationResult<List<QuestionAnswerDto>>();
+                result.AddFailure(Failure.BadRequest());
+                return result;
+            }
+
+            return testReader.GetUserAnswers(userContext.UserId, testId);
         }
 
-        public async Task<OperationResult<List<UserAnswer>>> GetUserAnswers(int testId, int userId)
-        {
-            var result = await testService.GetAnswers(testId, userId);
-            return result;
-        }
-
-        public async Task<OperationResult> PublishTest(int testId, PublishTestDto publishTestDto)
+        public async Task<OperationResult> ScheduleTest(int testId, PublishTestDto publishTestDto)
         {
             var result = new OperationResult();
             if (publishTestDto.StartDate >= publishTestDto.EndDate
@@ -187,7 +168,7 @@ namespace KtTest.Application_Services
 
             var students = await groupService.GetStudentsFromGroup(publishTestDto.GroupId);
 
-            return await testService.PublishTest(testId,
+            return await testService.ScheduleTest(testId,
                 publishTestDto.StartDate,
                 publishTestDto.EndDate,
                 publishTestDto.DurationInMinutes,

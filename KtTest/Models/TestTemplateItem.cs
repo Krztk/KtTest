@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace KtTest.Models
 {
-    public class TestItem
+    public class TestTemplateItem
     {
         public Question Question { get; set; }
         public int QuestionId { get; set; }
-        public Test Test { get; set; }
-        public int TestId { get; set; }
+        public TestTemplate TestTemplate { get; set; }
+        public int TestTemplateId { get; set; }
     }
 }

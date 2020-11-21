@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace KtTest.Dtos.Wizard
 {
-    public class TestDto
+    public class TestTemplateDto
     {
         public string Name { get; set; }
         public List<QuestionDto> Questions { get; set; }

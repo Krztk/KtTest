@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace KtTest.Models
 {
     public class TestResults
     {
-        public int TestId { get; set; }
+        public int ScheduledTestId { get; set; }
         public bool TestFinished { get; set; }
         public List<QuestionResult> QuestionResults { get; set; }
 
-        public TestResults(int testId, bool testFinished, List<QuestionResult> questionResults)
+        public TestResults(int scheduledTestId, bool testFinished, List<QuestionResult> questionResults)
         {
-            TestId = testId;
+            ScheduledTestId = scheduledTestId;
             TestFinished = testFinished;
             QuestionResults = questionResults;
         }

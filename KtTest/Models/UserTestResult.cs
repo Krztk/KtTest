@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace KtTest.Models
 {
     public class GroupResults
     {
-        public int TestId { get; set; }
+        public int ScheduledTestId { get; set; }
         public string TestName { get; set; }
         public int NumberOfQuestion { get; set; }
         public List<UserTestResult> Results { get; set; }

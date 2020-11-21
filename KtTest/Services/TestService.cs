@@ -1,11 +1,11 @@
-﻿using KtTest.Infrastructure.Data;
+﻿using KtTest.Exceptions.ServiceExcepctions;
+using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace KtTest.Services
@@ -23,100 +23,38 @@ namespace KtTest.Services
             this.dateTimeProvider = dateTimeProvider;
         }
 
-        public async Task<OperationResult<int>> CreateTest(string name, List<int> questionIds)
+        public async Task<OperationResult<int>> CreateTestTemplate(string name, List<int> questionIds)
         {
             int authorId = userContext.UserId;
             var result = new OperationResult<int>();
-            var test = new Test(name, authorId);
-
-            foreach (var questionId in questionIds)
-            {
-                var testItem = new TestItem { QuestionId = questionId };
-                test.TestItems.Add(testItem);
-            }
-
-            dbContext.Tests.Add(test);
+            var test = new TestTemplate(name, authorId, questionIds);
+            dbContext.TestTemplates.Add(test);
             await dbContext.SaveChangesAsync();
             result.Data = test.Id;
             return result;
         }
 
-        public async Task<PaginatedResult<Test>> GetTests(int offset, int limit)
+        public async Task<PaginatedResult<TestTemplate>> GetTestTemplates(int offset, int limit)
         {
             int authorId = userContext.UserId;
-            var tests = await dbContext.Tests
+            var tests = await dbContext.TestTemplates
                 .Where(x => x.AuthorId == authorId)
                 .Include(x => x.TestItems)
                 .Skip(offset)
                 .Take(limit + 1)
                 .ToListAsync();
 
-            var result = new PaginatedResult<Test>();
-            result.Data = new Paginated<Test>(limit, tests);
+            var result = new PaginatedResult<TestTemplate>();
+            result.Data = new Paginated<TestTemplate>(limit, tests);
             return result;
         }
 
-        public async Task<PaginatedResult<Test>> GetAvailableAndUpcomingTests(int offset, int limit)
+        public async Task<OperationResult<bool>> CanGetTest(int testId, int studentId)
         {
-            var tests = await dbContext.UserTests
-                .Include(x => x.Test)
-                .Where(x => x.UserId == userContext.UserId && x.Test.EndDate > dateTimeProvider.UtcNow)
-                .Skip(offset).Take(limit + 1)
-                .Select(x => x.Test)
-                .ToListAsync();
+            var result = new OperationResult<bool>();
 
-            var result = new PaginatedResult<Test>();
-            result.Data = new Paginated<Test>(limit, tests);
-            return result;
-        }
-
-        public async Task<OperationResult<Test>> GetTest(int id)
-        {
-            var result = new OperationResult<Test>();
-            var test = await dbContext.Tests
-                .Where(x => x.Id == id)
-                .Include(x => x.TestItems)
-                    .ThenInclude(x => x.Question)
-                        .ThenInclude(x => x.Answer)
-                            .ThenInclude(x => ((ChoiceAnswer)x).Choices)
-            .FirstOrDefaultAsync();
-
-            if (test == null)
-            {
-                result.AddFailure(Failure.NotFound());
-                return result;
-            }
-
-            result.Data = test;
-            return result;
-        }
-
-        public async Task<OperationResult<Test>> GetTest(int id, int authorId)
-        {
-            var result = new OperationResult<Test>();
-            var test = await dbContext.Tests
-                .Where(x => x.Id == id && x.AuthorId == authorId)
-                .Include(x => x.TestItems)
-                    .ThenInclude(x => x.Question)
-                        .ThenInclude(x => x.Answer)
-                            .ThenInclude(x => ((ChoiceAnswer)x).Choices)
-            .FirstOrDefaultAsync();
-
-            if (test == null)
-            {
-                result.AddFailure(Failure.NotFound());
-                return result;
-            }
-
-            result.Data = test;
-            return result;
-        }
-
-        public async Task<OperationResult<Test>> GetTestForStudent(int testId, int studentId)
-        {
-            var result = new OperationResult<Test>();
             var userTest = await dbContext.UserTests
-                .Where(x => x.TestId == testId && x.UserId == studentId)
+                .Where(x => x.ScheduledTestId == testId && x.UserId == studentId)
                 .FirstOrDefaultAsync();
 
             if (userTest == null)
@@ -125,46 +63,22 @@ namespace KtTest.Services
                 return result;
             }
 
+            var test = await dbContext.ScheduledTests.Where(x => x.Id == testId).FirstOrDefaultAsync();
             var currentDate = dateTimeProvider.UtcNow;
-            Expression<Func<Test, bool>> filterExpression;
             if (!userTest.StartDate.HasValue)
             {
-                filterExpression = x => x.Id == testId && currentDate >= x.StartDate && currentDate <= x.EndDate;
-            }
-            else
-            {
-                filterExpression = x => x.Id == testId && currentDate >= userTest.StartDate && currentDate <= userTest.StartDate.Value.AddMinutes(x.Duration);
-            }
-
-
-            var test = await dbContext.Tests
-                .Where(filterExpression)
-                .Include(x => x.TestItems)
-                    .ThenInclude(x => x.Question)
-                        .ThenInclude(x => x.Answer)
-                            .ThenInclude(x => ((ChoiceAnswer)x).Choices)
-            .FirstOrDefaultAsync();
-
-            if (test == null)
-            {
-                result.AddFailure(Failure.NotFound());
+                result.Data = currentDate >= test.StartDate && currentDate <= test.EndDate;
                 return result;
             }
 
-            if (!userTest.StartDate.HasValue)
-            {
-                userTest.StartDate = dateTimeProvider.UtcNow;
-                await dbContext.SaveChangesAsync();
-            }
-
-            result.Data = test;
+            result.Data = currentDate >= userTest.StartDate && currentDate <= userTest.StartDate.Value.AddMinutes(test.Duration);
             return result;
         }
 
         public async Task<OperationResult<GroupResults>> GetGroupResults(int testId)
         {
             var result = new OperationResult<GroupResults>();
-            var test = await dbContext.Tests.FirstOrDefaultAsync(x => x.Id == testId);
+            var test = await dbContext.ScheduledTests.Include(x => x.TestTemplate).FirstOrDefaultAsync(x => x.Id == testId);
             if (test == null)
             {
                 result.AddFailure(Failure.BadRequest());
@@ -183,9 +97,9 @@ namespace KtTest.Services
                 return testEndedResult.MapResult<GroupResults>();
             }
 
-            var query = from userTest in dbContext.UserTests.Where(x => x.TestId == testId && x.StartDate.HasValue)
+            var query = from userTest in dbContext.UserTests.Where(x => x.ScheduledTestId == testId && x.StartDate.HasValue)
                         from user in dbContext.Users.Where(x => x.Id == userTest.UserId)
-                        from userAnswer in dbContext.UserAnswers.Where(ua => ua.TestId == userTest.TestId && ua.UserId == userTest.UserId).DefaultIfEmpty()
+                        from userAnswer in dbContext.UserAnswers.Where(ua => ua.ScheduledTestId == userTest.ScheduledTestId && ua.UserId == userTest.UserId).DefaultIfEmpty()
                         from answer in dbContext.Answers.Where(an => an.QuestionId == userAnswer.QuestionId).DefaultIfEmpty()
                         select new { userTest, user, userAnswer, answer };
 
@@ -199,7 +113,7 @@ namespace KtTest.Services
                 if (d.userAnswer == null)
                 {
                     if (d.userTest.StartDate.HasValue && !CanAddAnswers(d.userTest.StartDate, test.Duration)
-                        || !d.userTest.StartDate.HasValue && dateTimeProvider.UtcNow > test.EndDate.Value.AddMinutes(test.Duration))
+                        || !d.userTest.StartDate.HasValue && dateTimeProvider.UtcNow > test.EndDate.AddMinutes(test.Duration))
                     {
                         UserTestResult userTestResult = new UserTestResult(d.user.UserName, 0, d.user.Id);
                         userIdUserTestResult.Add(userId, userTestResult);
@@ -225,7 +139,7 @@ namespace KtTest.Services
             {
                 Ended = testEndedResult.Data,
                 NumberOfQuestion = data.Count,
-                TestId = test.Id,
+                ScheduledTestId = test.Id,
                 TestName = test.Name,
                 Results = userIdUserTestResult.Values.ToList()
             };
@@ -234,11 +148,24 @@ namespace KtTest.Services
             return result;
         }
 
+        public void MarkTestAsStartedIfItHasntBeenMarkedAlready(int testId, int userId)
+        {
+            var userTest = dbContext.UserTests.Local.FirstOrDefault(x => x.ScheduledTestId == testId && x.UserId == userId);
+            if (userTest == null)
+                throw new ValueNotInTheCacheException("the userTest should already be in cache.");
+
+            if (userTest.StartDate.HasValue)
+                return;
+
+            userTest.SetStartDate(dateTimeProvider.UtcNow);
+            dbContext.SaveChanges();
+        }
+
         public async Task<OperationResult> AddUserAnswers(int testId, List<UserAnswer> userAnswers)
         {
             var result = new OperationResult();
             var userTest = await dbContext.UserTests
-                .Where(x => x.TestId == testId && x.UserId == userContext.UserId)
+                .Where(x => x.ScheduledTestId == testId && x.UserId == userContext.UserId)
                 .FirstOrDefaultAsync();
 
             if (userTest == null)
@@ -253,7 +180,7 @@ namespace KtTest.Services
                 return result;
             }
 
-            var testDuration = await dbContext.Tests.Where(x => x.Id == testId).Select(x => x.Duration).FirstAsync();
+            var testDuration = await dbContext.ScheduledTests.Where(x => x.Id == testId).Select(x => x.Duration).FirstAsync();
             if (!CanAddAnswers(userTest.StartDate, testDuration))
             {
                 result.AddFailure(Failure.BadRequest());
@@ -267,93 +194,67 @@ namespace KtTest.Services
                 return result;
             }
 
-            userTest.EndDate = dateTimeProvider.UtcNow;
+            userTest.SetEndDate(dateTimeProvider.UtcNow);
             dbContext.UserAnswers.AddRange(userAnswers);
             await dbContext.SaveChangesAsync();
             return new OperationResult();
         }
 
-        public async Task<OperationResult<List<UserAnswer>>> GetAnswers(int testId, int userId)
-        {
-            var result = new OperationResult<List<UserAnswer>>();
-            var testTaken = await HasUserTakenTest(testId, userId);
-            if (!testTaken)
-            {
-                result.AddFailure(Failure.BadRequest());
-                return result;
-            }
-
-            var userAnswers = await dbContext.UserAnswers
-                .Where(x => x.TestId == testId && x.UserId == userId)
-                .OrderBy(x => x.QuestionId)
-                .ToListAsync();
-
-            result.Data = userAnswers;
-            return result;
-        }
-
-        public async Task<OperationResult> PublishTest(int testId, DateTime startDate, DateTime endDate, int durationInMinutes, IList<UserInfo> students)
+        public async Task<OperationResult> ScheduleTest(int testId, DateTime startDate, DateTime endDate, int durationInMinutes, IList<UserInfo> students)
         {
             var result = new OperationResult();
+            var utcNow = dateTimeProvider.UtcNow;
 
-            if (startDate <= dateTimeProvider.UtcNow || startDate >= endDate)
+            if (startDate <= utcNow || startDate >= endDate)
             {
                 result.AddFailure(Failure.BadRequest());
                 return result;
             }
 
-            var test = await dbContext.Tests.FirstOrDefaultAsync(x => x.Id == testId);
+            var testTemplate = await dbContext.TestTemplates.FirstOrDefaultAsync(x => x.Id == testId);
 
-            if (test == null)
+            if (testTemplate == null)
             {
                 result.AddFailure(Failure.BadRequest());
                 return result;
             }
 
-            if (test.IsPublished())
-            {
-                result.AddFailure(Failure.BadRequest("Test is already published"));
-                return result;
-            }
-
-            if (userContext.UserId != test.AuthorId)
+            if (userContext.UserId != testTemplate.AuthorId)
             {
                 result.AddFailure(Failure.Unauthorized());
                 return result;
             }
 
-            var numberOfQuestions = await dbContext.TestItems.Where(x => x.TestId == testId).CountAsync();
+            var numberOfQuestions = await dbContext.TestItems.Where(x => x.TestTemplateId == testId).CountAsync();
             if (numberOfQuestions == 0)
             {
                 result.AddFailure(Failure.BadRequest("Cannot publish test without questions"));
                 return result;
             }
 
-            foreach (var student in students)
-                test.AddUser(student.Id);
+            IEnumerable<int> studentsIds = students.Select(x => x.Id);
+            var test = new ScheduledTest(testTemplate.Id, utcNow, startDate, endDate, durationInMinutes, studentsIds);
 
-
-            test.Publish(startDate, endDate, dateTimeProvider.UtcNow, durationInMinutes);
-
-
+            dbContext.ScheduledTests.Add(test);
             await dbContext.SaveChangesAsync();
             return result;
         }
 
-        public bool DoesTestContainQuestions(List<int> questionIds, int testId)
+        public bool DoesTestContainQuestions(IEnumerable<int> questionIds, int testId)
         {
-            var questionIdsFromDb = dbContext.TestItems
-                .Where(x => x.TestId == testId)
+            var idsOfQuestionsFromDb = dbContext.TestItems
+                .Join(dbContext.ScheduledTests, x => x.TestTemplateId, y => y.TestTemplateId, (x, y) => new { x.QuestionId, y.Id })
+                .Where(x => x.Id == testId)
                 .Select(x => x.QuestionId)
                 .ToHashSet();
 
-            return questionIds.All(x => questionIdsFromDb.Contains(x));
+            return questionIds.All(x => idsOfQuestionsFromDb.Contains(x));
         }
 
         public async Task<bool> HasUserTakenTest(int testId, int userId)
         {
             var hasTakenTest = await dbContext.UserAnswers
-                .Where(x => x.UserId == userId && x.TestId == testId)
+                .Where(x => x.UserId == userId && x.ScheduledTestId == testId)
                 .AnyAsync();
 
             return hasTakenTest;
@@ -362,7 +263,7 @@ namespace KtTest.Services
         public async Task<OperationResult<bool>> HasTestComeToEnd(int testId)
         {
             var result = new OperationResult<bool>();
-            var test = await dbContext.Tests.Where(x => x.Id == testId).Include(x => x.UserTests).FirstOrDefaultAsync();
+            var test = await dbContext.ScheduledTests.Where(x => x.Id == testId).Include(x => x.UserTests).FirstOrDefaultAsync();
             if (test == null)
             {
                 result.AddFailure(Failure.BadRequest($"Test with id {testId} does not exist"));
@@ -370,7 +271,7 @@ namespace KtTest.Services
             }
 
             var ended = true;
-            if (dateTimeProvider.UtcNow > test.EndDate.Value.AddMinutes(test.Duration))
+            if (dateTimeProvider.UtcNow > test.EndDate.AddMinutes(test.Duration))
             {
                 result.Data = ended;
                 return result;
@@ -397,77 +298,12 @@ namespace KtTest.Services
             return result;
         }
 
-        public async Task<OperationResult<TestResults>> CheckUsersAnswers(int testId)
-        {
-            var result = new OperationResult<TestResults>();
-            var test = await dbContext.Tests.FirstOrDefaultAsync(x => x.Id == testId);
-            if (test == null)
-            {
-                result.AddFailure(Failure.BadRequest());
-                return result;
-            }
-
-            if (test.AuthorId != userContext.UserId)
-            {
-                result.AddFailure(Failure.Unauthorized());
-                return result;
-            }
-
-            var testEndedResult = await HasTestComeToEnd(testId);
-            if (!testEndedResult.Succeeded)
-            {
-                return testEndedResult.MapResult<TestResults>();
-            }
-
-            var query = from userTest in dbContext.UserTests.Where(x => x.TestId == testId && x.StartDate.HasValue)
-                        from userAnswer in dbContext.UserAnswers.Where(ua => ua.TestId == userTest.TestId && ua.UserId == userTest.UserId).DefaultIfEmpty()
-                        from answer in dbContext.Answers.Where(an => an.QuestionId == userAnswer.QuestionId).DefaultIfEmpty()
-                        select new { userTest, userAnswer, answer };
-
-            var data = await query.ToListAsync();
-
-            var questionResults = new Dictionary<int, QuestionResult>();
-            int numberOfUsersWhoDidntSendAnswersInTime = 0;
-            foreach (var d in data)
-            {
-                bool isCorrect = false;
-                if (d.userAnswer == null)
-                {
-                    if (d.userTest.StartDate.HasValue && !CanAddAnswers(d.userTest.StartDate, test.Duration))
-                        numberOfUsersWhoDidntSendAnswersInTime++;
-
-                    continue;
-                }
-                else
-                {
-                    isCorrect = d.answer.ValidateAnswer(d.userAnswer);
-                }
-
-                int questionId = d.answer.QuestionId;
-                if (questionResults.ContainsKey(questionId))
-                {
-                    if (isCorrect)
-                        questionResults[questionId].NumberOfValidAnswers++;
-
-                    questionResults[questionId].TotalNumberOfAnswers++;
-                }
-                else
-                    questionResults.Add(questionId, new QuestionResult(questionId, isCorrect ? 1 : 0, 1));
-            }
-
-            foreach (var questionResult in questionResults.Values)
-                questionResult.TotalNumberOfAnswers += numberOfUsersWhoDidntSendAnswersInTime;
-
-            var testResults = new TestResults(testId, testEndedResult.Data, questionResults.Values.ToList());
-            result.Data = testResults;
-            return result;
-        }
-
         public async Task<bool> HasTestWithQuestionStarted(int questionId)
         {
-            return await dbContext.Tests
-                .Include(x => x.TestItems)
-                .Where(x => x.StartDate <= dateTimeProvider.UtcNow && x.TestItems.Any(x => x.QuestionId == questionId))
+            return await dbContext.ScheduledTests
+                .Include(x => x.TestTemplate)
+                    .ThenInclude(x => x.TestItems)
+                .Where(x => x.StartDate <= dateTimeProvider.UtcNow && x.TestTemplate.TestItems.Any(x => x.QuestionId == questionId))
                 .CountAsync() > 0;
         }
 

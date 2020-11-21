@@ -121,6 +121,7 @@ namespace KtTest
             services.AddTransient<QuestionReader, QuestionReader>();
             services.AddTransient<OrganizationReader, OrganizationReader>();
             services.AddTransient<GroupReader, GroupReader>();
+            services.AddTransient<TestReader, TestReader>();
 
             services.AddOpenAPI();
         }

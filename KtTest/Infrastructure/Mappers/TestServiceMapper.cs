@@ -14,7 +14,7 @@ namespace KtTest.Infrastructure.Mappers
             this.questionMapper = questionMapper;
         }
 
-        public Dtos.Test.TestDto MapToTestDto(Test test)
+        public Dtos.Test.TestDto MapToTestDto(TestTemplate test)
         {
             return new Dtos.Test.TestDto
             {
@@ -23,31 +23,30 @@ namespace KtTest.Infrastructure.Mappers
             };
         }
 
-        public Dtos.Test.TestHeaderDto MapToTestHeaderDto(Test x)
+        public Dtos.Test.TestHeaderDto MapToTestHeaderDto(ScheduledTest x)
         {
             return new Dtos.Test.TestHeaderDto
             {
                 Id = x.Id,
-                Name = x.Name,
-                StartsAt = x.StartDate.GetValueOrDefault(),
-                EndsAt = x.EndDate.GetValueOrDefault()
+                Name = x.TestTemplate.Name,
+                StartsAt = x.StartDate,
+                EndsAt = x.EndDate
             };
         }
 
-        public Dtos.Wizard.TestHeaderDto MapToTestWizardHeaderDto(Test test)
+        public Dtos.Wizard.TestTemplateHeaderDto MapToTestWizardHeaderDto(TestTemplate test)
         {
-            return new Dtos.Wizard.TestHeaderDto
+            return new Dtos.Wizard.TestTemplateHeaderDto
             {
                 Id = test.Id,
                 Name = test.Name,
-                NumberOfQuestions = test.TestItems.Count,
-                Published = test.PublishedAt.HasValue
+                NumberOfQuestions = test.TestItems.Count
             };
         }
 
-        public Dtos.Wizard.TestDto MapToTestWizardDto(Test test)
+        public Dtos.Wizard.TestTemplateDto MapToTestWizardDto(TestTemplate test)
         {
-            return new Dtos.Wizard.TestDto
+            return new Dtos.Wizard.TestTemplateDto
             {
                 Name = test.Name,
                 Questions = test.TestItems
@@ -72,20 +71,10 @@ namespace KtTest.Infrastructure.Mappers
                 throw new NotSupportedException();
 
             answer.QuestionId = answerDto.QuestionId;
-            answer.TestId = testId;
+            answer.ScheduledTestId = testId;
             answer.UserId = userId;
 
             return answer;
-        }
-
-        public TeacherTestResultsDto MapToTeacherTestResultsDto(TestResults results)
-        {
-            return new TeacherTestResultsDto
-            {
-                TestId = results.TestId,
-                QuestionResults = results.QuestionResults.Select(MapToQuestionResultDto).ToList(),
-                TestFinished = results.TestFinished
-            };
         }
 
         public GroupResultsDto MapToGroupResultsDto(GroupResults results)
@@ -94,19 +83,9 @@ namespace KtTest.Infrastructure.Mappers
             {
                 Ended = results.Ended,
                 NumberOfQuestion = results.NumberOfQuestion,
-                TestId = results.TestId,
+                TestId = results.ScheduledTestId,
                 TestName = results.TestName,
                 Results = results.Results.Select(MapToUserTestResultDto).ToList()
-            };
-        }
-
-        private QuestionResultDto MapToQuestionResultDto(QuestionResult questionResult)
-        {
-            return new QuestionResultDto
-            {
-                NumberOfValidAnswers = questionResult.NumberOfValidAnswers,
-                TotalNumberOfAnswers = questionResult.TotalNumberOfAnswers,
-                QuestionId = questionResult.QuestionId,
             };
         }
 

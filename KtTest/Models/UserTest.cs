@@ -5,20 +5,36 @@ namespace KtTest.Models
     public class UserTest
     {
         public int UserId { get; set; }
-        public Test Test { get; set; }
-        public int TestId { get; set; }
-        public DateTime? StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
+        public ScheduledTest ScheduledTest { get; set; }
+        public int ScheduledTestId { get; set; }
+        public DateTime? StartDate { get; private set; }
+        public DateTime? EndDate { get; private set; }
 
-        public UserTest(int userId, int testId)
+        public UserTest(int userId, int scheduledTestId)
         {
             UserId = userId;
-            TestId = testId;
+            ScheduledTestId = scheduledTestId;
         }
 
         private UserTest()
         {
 
+        }
+
+        public void SetStartDate(DateTime startDate)
+        {
+            if (StartDate.HasValue)
+                throw new Exception("Start date has been already set");
+
+            StartDate = startDate;
+        }
+
+        public void SetEndDate(DateTime endDate)
+        {
+            if (EndDate.HasValue)
+                throw new Exception("End date has been already set");
+
+            EndDate = endDate;
         }
     }
 }

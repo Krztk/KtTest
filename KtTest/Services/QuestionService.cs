@@ -37,7 +37,7 @@ namespace KtTest.Services
         {
             var question = dbContext.Questions.Local.FirstOrDefault(x => x.Id == questionId);
             if (question == null)
-                throw new ValueNotInTheCacheException("When this method is executed, the question should already be loaded.");
+                throw new ValueNotInTheCacheException("the question should already be in cache.");
 
             question.Content = content;
             if (categoryIds != null)

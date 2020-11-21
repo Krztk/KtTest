@@ -8,8 +8,9 @@ namespace KtTest.Infrastructure.Data
     {
         public DbSet<Question> Questions { get; set; }
         public DbSet<Answer> Answers { get; set; }
-        public DbSet<Test> Tests { get; set; }
-        public DbSet<TestItem> TestItems { get; set; }
+        public DbSet<ScheduledTest> ScheduledTests { get; set; }
+        public DbSet<TestTemplate> TestTemplates { get; set; }
+        public DbSet<TestTemplateItem> TestItems { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<QuestionCategory> QuestionCategories { get; set; }
         public DbSet<UserAnswer> UserAnswers { get; set; }
@@ -29,15 +30,15 @@ namespace KtTest.Infrastructure.Data
             builder.Entity<ChoiceAnswer>().HasMany(x => x.Choices).WithOne().HasForeignKey(x => x.ChoiceAnswerId);
             builder.Entity<WrittenAnswer>();
 
-            builder.Entity<TestItem>().HasKey(x => new { x.TestId, x.QuestionId });
-            builder.Entity<Test>().HasMany(x => x.TestItems).WithOne(x => x.Test).HasForeignKey(x => x.TestId);
+            builder.Entity<TestTemplateItem>().HasKey(x => new { x.TestTemplateId, x.QuestionId });
+            builder.Entity<TestTemplate>().HasMany(x => x.TestItems).WithOne(x => x.TestTemplate).HasForeignKey(x => x.TestTemplateId);
             builder.Entity<Question>().HasMany(x => x.TestItems).WithOne(x => x.Question).HasForeignKey(x => x.QuestionId);
 
             builder.Entity<Category>().HasMany(x => x.QuestionCategories).WithOne(x => x.Category).HasForeignKey(x => x.CategoryId);
             builder.Entity<Question>().HasMany(x => x.QuestionCategories).WithOne(x => x.Question).HasForeignKey(x => x.QuestionId);
             builder.Entity<QuestionCategory>().HasKey(x => new { x.QuestionId, x.CategoryId });
 
-            builder.Entity<UserAnswer>().HasKey(x => new { x.TestId, x.QuestionId, x.UserId });
+            builder.Entity<UserAnswer>().HasKey(x => new { x.ScheduledTestId, x.QuestionId, x.UserId });
             builder.Entity<WrittenUserAnswer>();
             builder.Entity<ChoiceUserAnswer>();
 
@@ -49,8 +50,9 @@ namespace KtTest.Infrastructure.Data
             builder.Entity<AppUser>().HasMany(x => x.GroupMembers).WithOne(x => x.User).HasForeignKey(x => x.UserId);
             builder.Entity<GroupMember>().HasKey(x => new { x.GroupId, x.UserId });
 
-            builder.Entity<Test>().HasMany(x => x.UserTests).WithOne(x => x.Test).HasForeignKey(x => x.TestId);
-            builder.Entity<UserTest>().HasKey(x => new { x.UserId, x.TestId });
+            builder.Entity<ScheduledTest>().HasMany(x => x.UserTests).WithOne(x => x.ScheduledTest).HasForeignKey(x => x.ScheduledTestId);
+            builder.Entity<ScheduledTest>().HasOne(x => x.TestTemplate).WithMany().HasForeignKey(x=>x.TestTemplateId);
+            builder.Entity<UserTest>().HasKey(x => new { x.UserId, x.ScheduledTestId });
         }
     }
 }

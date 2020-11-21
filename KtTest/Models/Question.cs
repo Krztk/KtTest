@@ -8,7 +8,7 @@ namespace KtTest.Models
         public int Id { get; set; }
         public string Content { get; set; }
         public Answer Answer { get; set; }
-        public ICollection<TestItem> TestItems { get; set; } = new List<TestItem>();
+        public ICollection<TestTemplateItem> TestItems { get; set; } = new List<TestTemplateItem>();
         public ICollection<QuestionCategory> QuestionCategories { get; set; } = new List<QuestionCategory>();
         public int AuthorId { get; set; }
 
