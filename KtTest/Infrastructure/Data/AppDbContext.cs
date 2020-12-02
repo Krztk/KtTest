@@ -1,6 +1,8 @@
 ﻿using KtTest.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System;
 
 namespace KtTest.Infrastructure.Data
 {
@@ -46,13 +48,41 @@ namespace KtTest.Infrastructure.Data
             builder.Entity<Invitation>().Property(x => x.Email).IsRequired();
             builder.Entity<Invitation>().Property(x => x.Code).IsRequired();
 
-            builder.Entity<Group>().HasMany(x => x.GroupMembers).WithOne(x=>x.Group).HasForeignKey(x=>x.GroupId);
+            builder.Entity<Group>().HasMany(x => x.GroupMembers).WithOne(x => x.Group).HasForeignKey(x => x.GroupId);
             builder.Entity<AppUser>().HasMany(x => x.GroupMembers).WithOne(x => x.User).HasForeignKey(x => x.UserId);
             builder.Entity<GroupMember>().HasKey(x => new { x.GroupId, x.UserId });
 
             builder.Entity<ScheduledTest>().HasMany(x => x.UserTests).WithOne(x => x.ScheduledTest).HasForeignKey(x => x.ScheduledTestId);
-            builder.Entity<ScheduledTest>().HasOne(x => x.TestTemplate).WithMany().HasForeignKey(x=>x.TestTemplateId);
+            builder.Entity<ScheduledTest>().HasOne(x => x.TestTemplate).WithMany().HasForeignKey(x => x.TestTemplateId);
             builder.Entity<UserTest>().HasKey(x => new { x.UserId, x.ScheduledTestId });
+
+            var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
+                v => v.ToUniversalTime(),
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+            var nullableDateTimeConverter = new ValueConverter<DateTime?, DateTime?>(
+                v => v.HasValue ? v.Value.ToUniversalTime() : v,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
+
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                if (entityType.IsKeyless)
+                {
+                    continue;
+                }
+
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(dateTimeConverter);
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(nullableDateTimeConverter);
+                    }
+                }
+            }
         }
     }
 }
