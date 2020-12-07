@@ -15,6 +15,7 @@ namespace KtTest.Dtos.Test
     {
         public int Id { get; set; }
         public string Username { get; set; }
-        public int NumberOfValidAnswers { get; set; }
+        public int? NumberOfValidAnswers { get; set; }
+        public string Status { get; set; }
     }
 }

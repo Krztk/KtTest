@@ -4,12 +4,13 @@
     {
         public string Value { get; set; }
 
-        public WrittenUserAnswer(string value)
+        public WrittenUserAnswer(string value, int scheduledTestId, int questionId, int userId)
+            : base(scheduledTestId, questionId, userId)
         {
             Value = value;
         }
 
-        private WrittenUserAnswer()
+        private WrittenUserAnswer() : base()
         {
 
         }

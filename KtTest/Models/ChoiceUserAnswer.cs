@@ -4,12 +4,13 @@
     {
         public int Value { get; set; }
 
-        public ChoiceUserAnswer(int value)
+        public ChoiceUserAnswer(int value, int scheduledTestId, int questionId, int userId)
+            : base(scheduledTestId, questionId, userId)
         {
             Value = value;
         }
 
-        private ChoiceUserAnswer()
+        private ChoiceUserAnswer() : base()
         {
 
         }

@@ -1,5 +1,6 @@
 ﻿using KtTest.Dtos.Test;
 using KtTest.Models;
+using KtTest.Services;
 using System;
 using System.Linq;
 
@@ -8,10 +9,12 @@ namespace KtTest.Infrastructure.Mappers
     public class TestServiceMapper
     {
         private readonly QuestionServiceMapper questionMapper;
+        private readonly IDateTimeProvider dateTimeProvider;
 
-        public TestServiceMapper(QuestionServiceMapper questionMapper)
+        public TestServiceMapper(QuestionServiceMapper questionMapper, IDateTimeProvider dateTimeProvider)
         {
             this.questionMapper = questionMapper;
+            this.dateTimeProvider = dateTimeProvider;
         }
 
         public Dtos.Test.TestDto MapToTestDto(TestTemplate test)
@@ -57,24 +60,31 @@ namespace KtTest.Infrastructure.Mappers
 
         public UserAnswer MapToUserAnswer(Dtos.Test.QuestionAnswerDto answerDto, int testId, int userId)
         {
-            UserAnswer answer;
             if (answerDto is Dtos.Test.WrittenAnswerDto writtenAnswerDto)
             {
-                answer = new WrittenUserAnswer(writtenAnswerDto.Text);
-
+                return new WrittenUserAnswer(writtenAnswerDto.Text, testId, answerDto.QuestionId, userId);
             }
             else if (answerDto is Dtos.Test.ChoiceAnswerDto choiceAnswerDto)
             {
-                answer = new ChoiceUserAnswer(choiceAnswerDto.Value);
+                return new ChoiceUserAnswer(choiceAnswerDto.Value, testId, answerDto.QuestionId, userId);
             }
             else
                 throw new NotSupportedException();
+        }
 
-            answer.QuestionId = answerDto.QuestionId;
-            answer.ScheduledTestId = testId;
-            answer.UserId = userId;
-
-            return answer;
+        public ScheduledTestDto MapToScheduledTestDto(ScheduledTest scheduledTest)
+        {
+            return new ScheduledTestDto
+            {
+                Id = scheduledTest.Id,
+                Duration = scheduledTest.Duration,
+                Name = scheduledTest.TestTemplate.Name,
+                StartDate = scheduledTest.StartDate,
+                EndDate = scheduledTest.EndDate,
+                ScheduledAt = scheduledTest.PublishedAt,
+                TestTemplateId = scheduledTest.TestTemplateId,
+                Ended = scheduledTest.HasTestComeToEnd(dateTimeProvider)
+            };
         }
 
         public GroupResultsDto MapToGroupResultsDto(GroupResults results)
@@ -93,9 +103,10 @@ namespace KtTest.Infrastructure.Mappers
         {
             return new UserTestResultDto
             {
-                Id = result.Id,
+                Id = result.UserId,
                 NumberOfValidAnswers = result.NumberOfValidAnswers,
                 Username = result.Username,
+                Status = result.Status.ToString(),
             };
         }
     }

@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using KtTest.Exceptions.ModelExceptions;
 using KtTest.Models;
 using System;
 using System.Collections.Generic;
@@ -13,8 +14,11 @@ namespace KtTest.Tests.ModelTests
         public void WrittenAnswer_WrittenUserAnswer_ReturnsTrue()
         {
             string expectedValue = "valid answer";
-            Answer answer = new WrittenAnswer(expectedValue);
-            var isValid = answer.ValidateAnswer(new WrittenUserAnswer(expectedValue));
+            Answer answer = new WrittenAnswer(expectedValue)
+            {
+                QuestionId = 1
+            };
+            var isValid = answer.ValidateAnswer(new WrittenUserAnswer(expectedValue, 1, 1, 1));
             isValid.Should().BeTrue();
         }
 
@@ -27,9 +31,13 @@ namespace KtTest.Tests.ModelTests
                 new Choice {Content = "2", Valid = false},
                 new Choice {Content = "3", Valid = false},
             };
-            Answer answer = new ChoiceAnswer(choices, ChoiceAnswerType.SingleChoice);
-            Action act = () => answer.ValidateAnswer(new WrittenUserAnswer("written answer"));
-            act.Should().Throw<Exception>();
+            Answer answer = new ChoiceAnswer(choices, ChoiceAnswerType.SingleChoice)
+            {
+                QuestionId = 1
+            };
+
+            Action act = () => answer.ValidateAnswer(new WrittenUserAnswer("written answer", 1, 1, 1));
+            act.Should().Throw<WrongAnswerTypeException>();
             
         }
     }

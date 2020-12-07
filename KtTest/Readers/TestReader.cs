@@ -5,6 +5,7 @@ using KtTest.Models;
 using KtTest.Results;
 using KtTest.Services;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -52,6 +53,20 @@ namespace KtTest.Readers
             };
 
             result.Data = dto;
+            return result;
+        }
+
+        public async Task<PaginatedResult<ScheduledTestDto>> GetScheduledTest(int userId, int offset, int limit)
+        {
+            var tests = await dbContext.ScheduledTests
+                .Include(x => x.TestTemplate)
+                .Include(x => x.UserTests)
+                .Where(x => x.TestTemplate.AuthorId == userId)
+                .Skip(offset).Take(limit + 1)
+                .ToListAsync();
+
+            var result = new PaginatedResult<ScheduledTestDto>();
+            result.Data = new Paginated<ScheduledTestDto>(limit, tests.Select(testMapper.MapToScheduledTestDto));
             return result;
         }
 

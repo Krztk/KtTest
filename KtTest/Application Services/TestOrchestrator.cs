@@ -53,6 +53,11 @@ namespace KtTest.Application_Services
             return result;
         }
 
+        public async Task<PaginatedResult<ScheduledTestDto>> GetScheduledTests(Pagination pagination)
+        {
+            return await testReader.GetScheduledTest(userContext.UserId, pagination.Offset, pagination.Limit);
+        }
+
         public PaginatedResult<Dtos.Test.TestHeaderDto> GetAvailableAndUpcomingTests(Pagination pagination)
         {
             return testReader.GetAvailableAndUpcomingTests(userContext.UserId, pagination.Offset, pagination.Limit);
@@ -65,7 +70,7 @@ namespace KtTest.Application_Services
 
         }
 
-        public OperationResult<Dtos.Wizard.TestTemplateDto> GetTestWizard(int id)
+        public OperationResult<Dtos.Wizard.TestTemplateDto> GetTestTemplate(int id)
         {
             return testReader.GetTestTemplate(id, userContext.UserId);
         }

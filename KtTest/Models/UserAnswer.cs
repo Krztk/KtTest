@@ -7,8 +7,19 @@ namespace KtTest.Models
 {
     public abstract class UserAnswer
     {
-        public int ScheduledTestId { get; set; }
-        public int QuestionId { get; set; }
-        public int UserId { get; set; }
+        public int ScheduledTestId { get; private set; }
+        public int QuestionId { get; private set; }
+        public int UserId { get; private set; }
+
+        public UserAnswer(int scheduledTestId, int questionId, int userId)
+        {
+            ScheduledTestId = scheduledTestId;
+            QuestionId = questionId;
+            UserId = userId;
+        }
+
+        protected UserAnswer()
+        {
+        }
     }
 }

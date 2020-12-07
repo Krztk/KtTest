@@ -112,8 +112,8 @@ namespace KtTest
             services.AddScoped<IEmailSender, FakeEmailSender>();
             services.AddScoped<AuthService, AuthService>();
 
+            services.AddScoped<TestServiceMapper, TestServiceMapper>();
             services.AddSingleton<QuestionServiceMapper, QuestionServiceMapper>();
-            services.AddSingleton<TestServiceMapper, TestServiceMapper>();
             services.AddSingleton<CategoryServiceMapper, CategoryServiceMapper>();
             services.AddSingleton<OrganizationServiceMapper, OrganizationServiceMapper>();
             services.AddSingleton<GroupServiceMapper, GroupServiceMapper>();

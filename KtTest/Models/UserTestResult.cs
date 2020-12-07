@@ -13,15 +13,27 @@ namespace KtTest.Models
 
     public class UserTestResult
     {
-        public int Id { get; set; }
-        public string Username { get; set; }
-        public int NumberOfValidAnswers { get; set; }
+        public int UserId { get; private set; }
+        public string Username { get; private set; }
+        public int? NumberOfValidAnswers { get; set; }
+        public TestStatus Status { get; private set; }
 
-        public UserTestResult(string username, int validAnswers, int id)
+
+        public UserTestResult(string username, int? validAnswers, int userId, TestStatus status)
         {
-            Id = id;
+            UserId = userId;
             Username = username;
             NumberOfValidAnswers = validAnswers;
+            Status = status;
         }
+    }
+
+    public enum TestStatus
+    {
+        UserHasntSentAnswersInTime,
+        UserHasntStartedTestInTime,
+        UserHasntStartedTestYet,
+        Completed,
+        IsInProcess
     }
 }

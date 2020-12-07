@@ -1,4 +1,4 @@
-﻿using KtTest.Exceptions.ServiceExcepctions;
+﻿using KtTest.Exceptions.ServiceExceptions;
 using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KtTest.Exceptions.ModelExceptions;
+using System;
 using System.Collections.Generic;
 
 namespace KtTest.Models
@@ -28,8 +29,11 @@ namespace KtTest.Models
         {
             var choiceAnswer = userAnswer as ChoiceUserAnswer;
 
-            if (choiceAnswer == null || choiceAnswer.QuestionId != QuestionId)
-                throw new Exception("Wrong answer type");
+            if (choiceAnswer == null)
+                throw new WrongAnswerTypeException("Wrong answer type");
+
+            if (choiceAnswer.QuestionId != QuestionId)
+                throw new Exception("Answer.QuestionId doesn't match UserAnswer.QuestionId");
 
             return NumericValue == choiceAnswer.Value;
         }

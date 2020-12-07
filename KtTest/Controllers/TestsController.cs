@@ -21,6 +21,14 @@ namespace KtTest.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "EmployeeOnly")]
+        public async Task<IActionResult> GetScheduledTests([FromQuery] Pagination pagination)
+        {
+            var result = await testOrchestrator.GetScheduledTests(pagination);
+            return ActionResult(result);
+        }
+
+        [HttpGet("available")]
         public IActionResult GetAvailableTests([FromQuery] Pagination pagination)
         {
             var result = testOrchestrator.GetAvailableAndUpcomingTests(pagination);
@@ -53,9 +61,9 @@ namespace KtTest.Controllers
 
         [Authorize(Policy = "EmployeeOnly")]
         [HttpGet("wizard/{id}")]
-        public IActionResult GetTestWizard(int id)
+        public IActionResult GetTestTemplate(int id)
         {
-            var result = testOrchestrator.GetTestWizard(id);
+            var result = testOrchestrator.GetTestTemplate(id);
             return ActionResult(result);
         }
 

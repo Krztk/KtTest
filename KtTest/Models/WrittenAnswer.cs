@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KtTest.Exceptions.ModelExceptions;
+using System;
 
 namespace KtTest.Models
 {
@@ -20,8 +21,11 @@ namespace KtTest.Models
         {
             var writtenAnswer = userAnswer as WrittenUserAnswer;
 
-            if (writtenAnswer == null || writtenAnswer.QuestionId != QuestionId)
-                throw new Exception("Wrong answer type");
+            if (writtenAnswer == null)
+                throw new WrongAnswerTypeException("Wrong answer type");
+
+            if (writtenAnswer.QuestionId != QuestionId)
+                throw new Exception("Answer.QuestionId doesn't match UserAnswer.QuestionId");
 
             return writtenAnswer.Value == Value;
         }

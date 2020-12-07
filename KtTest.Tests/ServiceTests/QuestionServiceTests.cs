@@ -1,15 +1,13 @@
 ﻿using FluentAssertions;
-using KtTest.Exceptions.ServiceExcepctions;
+using KtTest.Exceptions.ServiceExceptions;
 using KtTest.Models;
 using KtTest.Results;
 using KtTest.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 

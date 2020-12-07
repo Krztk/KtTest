@@ -185,7 +185,7 @@ namespace KtTest.Tests.ServiceTests
             var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
             int testAuthorId = 1;
             List<int> questionIds = SeedQuestions(testAuthorId);
-            ScheduledTest test = PrepareTestForUsers(publishDate, startDate, endDate,testAuthorId, usersTakingTest, questionIds);
+            ScheduledTest test = PrepareTestForUsers("test1", publishDate, startDate, endDate, testAuthorId, 20, usersTakingTest, questionIds);
             dbContext.Add(test);
             dbContext.SaveChanges();
             var testId = test.Id;
@@ -215,7 +215,7 @@ namespace KtTest.Tests.ServiceTests
             var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
             int testAuthorId = 1;
             List<int> questionIds = SeedQuestions(testAuthorId);
-            ScheduledTest test = PrepareTestForUsers(publishDate, startDate, endDate, testAuthorId, usersTakingTest, questionIds);
+            ScheduledTest test = PrepareTestForUsers("test#1", publishDate, startDate, endDate, testAuthorId, 20, usersTakingTest, questionIds);
             dbContext.Add(test);
             dbContext.SaveChanges();
             var testId = test.Id;
@@ -245,7 +245,7 @@ namespace KtTest.Tests.ServiceTests
             var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
             int testAuthorId = 1;
             List<int> questionIds = SeedQuestions(testAuthorId);
-            ScheduledTest test = PrepareTestForUsers(publishDate, startDate, endDate, testAuthorId, usersTakingTest, questionIds);
+            ScheduledTest test = PrepareTestForUsers("test#1", publishDate, startDate, endDate, testAuthorId, 20, usersTakingTest, questionIds);
             dbContext.Add(test);
             dbContext.SaveChanges();
             var testId = test.Id;
@@ -282,13 +282,13 @@ namespace KtTest.Tests.ServiceTests
             return scheduledTest;
         }
 
-        private ScheduledTest PrepareTestForUsers(DateTime publishDate, DateTime startDate, DateTime endDate, int testAuthorId, IEnumerable<int> userIds, IEnumerable<int> questionsIds)
+        private ScheduledTest PrepareTestForUsers(string testName, DateTime publishDate, DateTime startDate, DateTime endDate, int testAuthorId, int duration, IEnumerable<int> userIds, IEnumerable<int> questionsIds)
         {
-            var testTemplate = new TestTemplate("test 1", 1, questionsIds);
+            var testTemplate = new TestTemplate(testName, testAuthorId, questionsIds);
             dbContext.TestTemplates.Add(testTemplate);
             dbContext.SaveChanges();
 
-            var scheduledTest = new ScheduledTest(testTemplate.Id, publishDate, startDate, endDate, 20, userIds);
+            var scheduledTest = new ScheduledTest(testTemplate.Id, publishDate, startDate, endDate, duration, userIds);
             return scheduledTest;
         }
 
@@ -315,6 +315,5 @@ namespace KtTest.Tests.ServiceTests
             dbContext.SaveChanges();
             return questions.Select(x => x.Id).ToList();
         }
-
     }
 }

@@ -1,4 +1,4 @@
-﻿using KtTest.Exceptions.ServiceExcepctions;
+﻿using KtTest.Exceptions.ServiceExceptions;
 using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;
@@ -78,14 +78,14 @@ namespace KtTest.Services
         public async Task<OperationResult<GroupResults>> GetGroupResults(int testId)
         {
             var result = new OperationResult<GroupResults>();
-            var test = await dbContext.ScheduledTests.Include(x => x.TestTemplate).FirstOrDefaultAsync(x => x.Id == testId);
-            if (test == null)
+            var scheduledTest = await dbContext.ScheduledTests.Include(x => x.TestTemplate).FirstOrDefaultAsync(x => x.Id == testId);
+            if (scheduledTest == null)
             {
                 result.AddFailure(Failure.BadRequest());
                 return result;
             }
 
-            if (test.AuthorId != userContext.UserId)
+            if (scheduledTest.TestTemplate.AuthorId != userContext.UserId)
             {
                 result.AddFailure(Failure.Unauthorized());
                 return result;
@@ -97,51 +97,35 @@ namespace KtTest.Services
                 return testEndedResult.MapResult<GroupResults>();
             }
 
-            var query = from userTest in dbContext.UserTests.Where(x => x.ScheduledTestId == testId && x.StartDate.HasValue)
-                        from user in dbContext.Users.Where(x => x.Id == userTest.UserId)
-                        from userAnswer in dbContext.UserAnswers.Where(ua => ua.ScheduledTestId == userTest.ScheduledTestId && ua.UserId == userTest.UserId).DefaultIfEmpty()
-                        from answer in dbContext.Answers.Where(an => an.QuestionId == userAnswer.QuestionId).DefaultIfEmpty()
-                        select new { userTest, user, userAnswer, answer };
+            var query = from UserTest in dbContext.UserTests.Where(x => x.ScheduledTestId == testId)
+                        from User in dbContext.Users.Where(x => x.Id == UserTest.UserId)
+                        from UserAnswer in dbContext.UserAnswers.Where(ua => ua.ScheduledTestId == UserTest.ScheduledTestId && ua.UserId == UserTest.UserId).DefaultIfEmpty()
+                        from Answer in dbContext.Answers.Where(an => an.QuestionId == UserAnswer.QuestionId).DefaultIfEmpty()
+                        select new { UserTest, UserId = User.Id, User.UserName, UserAnswer, Answer };
 
-            var data = await query.ToListAsync();
+            int numberOfQuestions = await dbContext.TestItems.Where(x => x.TestTemplateId == scheduledTest.TestTemplateId).CountAsync();
+            var queryResults = await query.ToArrayAsync();
 
-            var userIdUserTestResult = new Dictionary<int, UserTestResult>();
-            foreach (var d in data)
+            var userIdTestAnswer = new Dictionary<int, TestAnswers>();
+            foreach (var queryResult in queryResults)
             {
-                int userId = d.user.Id;
-                bool isCorrect = false;
-                if (d.userAnswer == null)
+                var userId = queryResult.UserId;
+                if (!userIdTestAnswer.ContainsKey(userId))
                 {
-                    if (d.userTest.StartDate.HasValue && !CanAddAnswers(d.userTest.StartDate, test.Duration)
-                        || !d.userTest.StartDate.HasValue && dateTimeProvider.UtcNow > test.EndDate.AddMinutes(test.Duration))
-                    {
-                        UserTestResult userTestResult = new UserTestResult(d.user.UserName, 0, d.user.Id);
-                        userIdUserTestResult.Add(userId, userTestResult);
-                    }
-
-                    continue;
-                }
-                else
-                {
-                    isCorrect = d.answer.ValidateAnswer(d.userAnswer);
+                    userIdTestAnswer.Add(userId, new TestAnswers(scheduledTest, queryResult.UserTest, queryResult.UserName, dateTimeProvider));
                 }
 
-                if (userIdUserTestResult.ContainsKey(userId))
-                {
-                    if (isCorrect)
-                        userIdUserTestResult[userId].NumberOfValidAnswers++;
-                }
-                else
-                    userIdUserTestResult.Add(userId, new UserTestResult(d.user.UserName, isCorrect ? 1 : 0, d.user.Id));
+                userIdTestAnswer[userId].AddAnswerPair(queryResult.UserAnswer, queryResult.Answer);
             }
 
+            var testResults = userIdTestAnswer.Select(x => x.Value.GetTestResult()).ToList();
             var groupResults = new GroupResults
             {
                 Ended = testEndedResult.Data,
-                NumberOfQuestion = data.Count,
-                ScheduledTestId = test.Id,
-                TestName = test.Name,
-                Results = userIdUserTestResult.Values.ToList()
+                NumberOfQuestion = numberOfQuestions,
+                ScheduledTestId = scheduledTest.Id,
+                TestName = scheduledTest.TestTemplate.Name,
+                Results = testResults
             };
 
             result.Data = groupResults;
@@ -270,31 +254,7 @@ namespace KtTest.Services
                 return result;
             }
 
-            var ended = true;
-            if (dateTimeProvider.UtcNow > test.EndDate.AddMinutes(test.Duration))
-            {
-                result.Data = ended;
-                return result;
-            }
-
-            foreach (var userTest in test.UserTests)
-            {
-                if (!userTest.StartDate.HasValue && dateTimeProvider.UtcNow < test.EndDate)
-                {
-                    ended = false;
-                    break;
-                }
-
-                if (userTest.StartDate.HasValue
-                    && !userTest.EndDate.HasValue
-                    && dateTimeProvider.UtcNow < userTest.StartDate.Value.AddMinutes(test.Duration))
-                {
-                    ended = false;
-                    break;
-                }
-            }
-
-            result.Data = ended;
+            result.Data = test.HasTestComeToEnd(dateTimeProvider);
             return result;
         }
 
