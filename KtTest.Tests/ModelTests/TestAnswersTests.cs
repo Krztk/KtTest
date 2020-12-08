@@ -21,7 +21,6 @@ namespace KtTest.Tests.ModelTests
             var userTest = new UserTest(2, 0);
             userTest.SetStartDate(utcNow.AddMinutes(-50));
             userTest.SetEndDate(utcNow.AddMinutes(-40));
-            int questionId = 1;
             var testAnswers = new TestAnswers(scheduledTest, userTest, "UserName", dateTimeProdiver.Object);
             testAnswers.AddAnswerPair(new WrittenUserAnswer("value", 0, 1, userId), new WrittenAnswer("value") { QuestionId = 1 });
             testAnswers.AddAnswerPair(new WrittenUserAnswer("value2", 0, 2, userId), new WrittenAnswer("value2") { QuestionId = 2 });
