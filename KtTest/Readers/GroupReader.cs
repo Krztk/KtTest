@@ -30,6 +30,16 @@ namespace KtTest.Readers
                 .ToList();
         }
 
+        public List<GroupDto> GetGroupsWithUser(int userId)
+        {
+            return dbContext.GroupMembers
+                .Include(x => x.Group)
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.GroupId)
+                .Select(x => groupMapper.MapToGroupDto(x.Group))
+                .ToList();
+        }
+
         public List<UserDto> GetGroupMembers(int groupId)
         {
             return dbContext.GroupMembers

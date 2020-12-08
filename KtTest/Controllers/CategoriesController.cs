@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace KtTest.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "EmployeeOnly")]
     [ApiController]
     [Route("[controller]")]
     public class CategoriesController : CustomControllerBase

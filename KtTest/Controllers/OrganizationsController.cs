@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace KtTest.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "OwnerOnly")]
     [ApiController]
     [Route("[controller]")]
     public class OrganizationsController : CustomControllerBase

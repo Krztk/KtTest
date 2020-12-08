@@ -1,9 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace KtTest.Services
 {
@@ -11,11 +7,13 @@ namespace KtTest.Services
     {
         public int UserId { get; }
         public bool IsTeacher { get; }
+        public bool IsOwner { get; }
 
         public UserContext(IHttpContextAccessor contextAccessor)
         {
             UserId = GetAuthenticatedUserId(contextAccessor.HttpContext);
             IsTeacher = IsAuthenticatedUserTeacher(contextAccessor.HttpContext);
+            IsOwner = IsOrganizationOwner(contextAccessor.HttpContext);
         }
 
         public static int GetAuthenticatedUserId(HttpContext httpContext)
@@ -33,9 +31,19 @@ namespace KtTest.Services
 
         public static bool IsAuthenticatedUserTeacher(HttpContext httpContext)
         {
+            return HasClaim(httpContext, "Employee");
+        }
+
+        public static bool IsOrganizationOwner(HttpContext httpContext)
+        {
+            return HasClaim(httpContext, "Owner");
+        }
+
+        private static bool HasClaim(HttpContext httpContext, string claimName)
+        {
             if (httpContext?.User?.Identity is ClaimsIdentity identity)
             {
-                var claim = identity.FindFirst("Employee");
+                var claim = identity.FindFirst(claimName);
                 if (claim != null)
                     return true;
             }

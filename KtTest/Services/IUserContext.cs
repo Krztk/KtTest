@@ -9,5 +9,6 @@ namespace KtTest.Services
     {
         int UserId { get; }
         bool IsTeacher { get; }
+        bool IsOwner { get; }
     }
 }

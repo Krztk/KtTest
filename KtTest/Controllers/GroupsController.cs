@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace KtTest.Controllers
 {
-    [Authorize(Policy = "OwnerOnly")]
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class GroupsController : CustomControllerBase
@@ -25,6 +25,7 @@ namespace KtTest.Controllers
             return Ok(result);
         }
 
+        [Authorize(Policy = "OwnerOnly")]
         [HttpGet("{id}/members")]
         public async Task<IActionResult> GetGroupMembers(int id)
         {
@@ -32,6 +33,7 @@ namespace KtTest.Controllers
             return ActionResult(result);
         }
 
+        [Authorize(Policy = "OwnerOnly")]
         [HttpGet("{id}/available")]
         public async Task<IActionResult> GetAvailableUsers(int id)
         {
@@ -39,6 +41,7 @@ namespace KtTest.Controllers
             return ActionResult(result);
         }
 
+        [Authorize(Policy = "OwnerOnly")]
         [HttpPost]
         public async Task<IActionResult> CreateGroup(CreateGroupDto createGroupDto)
         {
@@ -46,6 +49,7 @@ namespace KtTest.Controllers
             return ActionResult(result);
         }
 
+        [Authorize(Policy = "OwnerOnly")]
         [HttpPost("{id}/members")]
         public async Task<IActionResult> AddMember(int id, AddMemberDto addMemberDto)
         {

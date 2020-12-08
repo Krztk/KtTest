@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace KtTest.Controllers
 {
+    [Authorize(Policy = "EmployeeOnly")]
     [ApiController]
     [Route("[controller]")]
-    [Authorize]
     public class QuestionsController : CustomControllerBase
     {
         private readonly QuestionOrchestrator questionOrchestrator;

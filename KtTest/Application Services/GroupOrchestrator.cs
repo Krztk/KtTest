@@ -3,6 +3,7 @@ using KtTest.Dtos.Organizations;
 using KtTest.Readers;
 using KtTest.Results;
 using KtTest.Services;
+using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -15,7 +16,11 @@ namespace KtTest.Application_Services
         private readonly GroupReader groupReader;
         private readonly IUserContext userContext;
 
-        public GroupOrchestrator(GroupService groupService, OrganizationService organizationService, GroupReader groupReader, IUserContext userContext)
+        public GroupOrchestrator(GroupService groupService,
+            OrganizationService organizationService,
+            GroupReader groupReader,
+            IUserContext userContext,
+            IAuthorizationService authorizationService)
         {
             this.groupService = groupService;
             this.organizationService = organizationService;
@@ -25,7 +30,10 @@ namespace KtTest.Application_Services
 
         public List<GroupDto> GetGroups()
         {
-            return groupReader.GetGroups(userContext.UserId);
+            if (userContext.IsOwner)
+                return groupReader.GetGroups(userContext.UserId);
+
+            return groupReader.GetGroupsWithUser(userContext.UserId);
         }
 
         public async Task<OperationResult<List<UserDto>>> GetGroupMembers(int groupId)
