@@ -1,45 +1,54 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using KtTest.Results.Errors;
+using System;
 
 namespace KtTest.Results
 {
     public class OperationResult
     {
-        protected List<Failure> failures { get; set; }
-        public IEnumerable<Failure> Failures => failures;
-        public bool Succeeded => !failures.Any();
+        private static readonly OperationResult okResult = new OperationResult();
+        public ErrorBase Error { get; }
+        public bool Succeeded => Error == null;
         public OperationResult()
         {
-            failures = new List<Failure>();
         }
 
-        public void AddFailure(Failure failure)
+        public OperationResult(ErrorBase error)
         {
-            failures.Add(failure);
+            Error = error;
         }
+
+        public static OperationResult Ok() => okResult;
+
+        public static implicit operator OperationResult(ErrorBase error) => new OperationResult(error);
     }
 
-    public class OperationResult<T> : OperationResult
+    public class OperationResult<TData> : OperationResult
     {
-        public T Data { get; set; }
+        public TData Data { get; set; }
 
-        public OperationResult<TR> MapResult<TR>(Func<T, TR> projection)
+        public OperationResult(TData data)
         {
-            var result = new OperationResult<TR>();
-            result.failures = failures;
-            if (Succeeded)
-            {
-                result.Data = projection(Data);
-            }
-            return result;
+            Data = data;
         }
 
-        public OperationResult<TR> MapResult<TR>()
+        public OperationResult(ErrorBase error) : base(error)
         {
-            var result = new OperationResult<TR>();
-            result.failures = failures;
-            return result;
         }
+
+        public OperationResult<TResult> Then<TResult>(Func<TData, TResult> func)
+        {
+            return Succeeded ? (OperationResult<TResult>)func(Data) : Error;
+        }
+
+        public T Match<T>(Func<ErrorBase, T> onError, Func<TData, T> onSuccess)
+        {
+            return Succeeded ? onSuccess(Data) : onError(Error);
+        }
+
+        public static implicit operator OperationResult<TData>(ErrorBase error) => new OperationResult<TData>(error);
+
+        public static implicit operator OperationResult<TData>(TData data) => new OperationResult<TData>(data);
+
+        public static implicit operator TData(OperationResult<TData> result) => result.Data;
     }
 }

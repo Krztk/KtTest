@@ -4,6 +4,7 @@ using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
 using KtTest.Readers;
 using KtTest.Results;
+using KtTest.Results.Errors;
 using KtTest.Services;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,34 +41,29 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<int>> CreateTestTemplate(Dtos.Wizard.CreateTestDto testDto)
         {
-            var result = new OperationResult<int>();
-
             var doQuestionsExist = questionService.DoQuestionsExist(testDto.QuestionIds);
             if (!doQuestionsExist)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
-            result = await testService.CreateTestTemplate(testDto.Name, testDto.QuestionIds);
-            return result;
+            return await testService.CreateTestTemplate(testDto.Name, testDto.QuestionIds);
         }
 
-        public async Task<PaginatedResult<ScheduledTestDto>> GetScheduledTests(Pagination pagination)
+        public async Task<OperationResult<Paginated<ScheduledTestDto>>> GetScheduledTests(Pagination pagination)
         {
             return await testReader.GetScheduledTest(userContext.UserId, pagination.Offset, pagination.Limit);
         }
 
-        public PaginatedResult<Dtos.Test.TestHeaderDto> GetAvailableAndUpcomingTests(Pagination pagination)
+        public OperationResult<Paginated<Dtos.Test.TestHeaderDto>> GetAvailableAndUpcomingTests(Pagination pagination)
         {
             return testReader.GetAvailableAndUpcomingTests(userContext.UserId, pagination.Offset, pagination.Limit);
         }
 
-        public PaginatedResult<Dtos.Wizard.TestTemplateHeaderDto> GetTestTemplates(Pagination pagination)
+        public OperationResult<Paginated<Dtos.Wizard.TestTemplateHeaderDto>> GetTestTemplates(Pagination pagination)
         {
             pagination ??= new Pagination(offset: 0, limit: 25);
             return testReader.GetTestTemplateHeaders(userContext.UserId, pagination.Offset, pagination.Limit);
-
         }
 
         public OperationResult<Dtos.Wizard.TestTemplateDto> GetTestTemplate(int id)
@@ -77,22 +73,22 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<TestResultsDto>> GetTestResult(int testId)
         {
-            var result = new OperationResult<TestResultsDto>();
             var hasAccess = await testService.HasUserTakenTest(testId, userContext.UserId);
             if (!hasAccess)
             {
-                result.AddFailure(Failure.Unauthorized());
-                return result;
+                return new AuthorizationError();
             }
 
             var testEndedResult = await testService.HasTestComeToEnd(testId);
             if (!testEndedResult.Succeeded)
-                return testEndedResult.MapResult<TestResultsDto>();
-
-            if (!testEndedResult.Data)
             {
-                result.AddFailure(Failure.BadRequest("Test hasn't come to end yet"));
-                return result;
+                return testEndedResult.Error;
+            }
+
+            bool hasEnded = testEndedResult;
+            if (!hasEnded)
+            {
+                return new BadRequestError("Test hasn't come to end yet");
             }
 
             return await testReader.GetTestResultsDto(testId);
@@ -101,22 +97,21 @@ namespace KtTest.Application_Services
         public async Task<OperationResult<GroupResultsDto>> GetTestResultTeacher(int testId)
         {
             var result = await testService.GetGroupResults(testId);
-            return result.MapResult(testMapper.MapToGroupResultsDto);
+            return result.Then(testMapper.MapToGroupResultsDto);
         }
 
         public async Task<OperationResult<Dtos.Test.TestDto>> GetTest(int id)
         {
-            var canGetTestResult = await testService.CanGetTest(id, userContext.UserId);
-            if (!canGetTestResult.Succeeded)
+            var canGetTest = await testService.CanGetTest(id, userContext.UserId);
+
+            if (!canGetTest.Succeeded)
             {
-                return canGetTestResult.MapResult<Dtos.Test.TestDto>();
+                return canGetTest.Error;
             }
 
-            if (!canGetTestResult.Data)
+            if (!canGetTest.Data)
             {
-                var result = new OperationResult<Dtos.Test.TestDto>();
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             testService.MarkTestAsStartedIfItHasntBeenMarkedAlready(id, userContext.UserId);
@@ -130,12 +125,9 @@ namespace KtTest.Application_Services
                 .Select(x => testMapper.MapToUserAnswer(x, testId, userId))
                 .ToList();
 
-            var result = new OperationResult();
-
             if (answers.Count == 0)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             return await testService.AddUserAnswers(testId, answers);
@@ -146,9 +138,7 @@ namespace KtTest.Application_Services
             var testTaken = await testService.HasUserTakenTest(testId, userContext.UserId);
             if (!testTaken)
             {
-                var result = new OperationResult<List<QuestionAnswerDto>>();
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             return testReader.GetUserAnswers(userContext.UserId, testId);
@@ -160,15 +150,13 @@ namespace KtTest.Application_Services
             if (publishTestDto.StartDate >= publishTestDto.EndDate
                 && dateTimeProvider.UtcNow >= publishTestDto.StartDate)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             bool isMember = await groupService.IsUserMemberOfGroup(userContext.UserId, publishTestDto.GroupId);
             if (!isMember)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             var students = await groupService.GetStudentsFromGroup(publishTestDto.GroupId);

@@ -2,6 +2,7 @@
 using KtTest.Dtos.Organizations;
 using KtTest.Readers;
 using KtTest.Results;
+using KtTest.Results.Errors;
 using KtTest.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
@@ -41,20 +42,17 @@ namespace KtTest.Application_Services
             var userId = userContext.UserId;
             var getIdOfGroupOwnerResult = await organizationService.GetIdOfGroupOwner(groupId);
             if (!getIdOfGroupOwnerResult.Succeeded)
-                return getIdOfGroupOwnerResult.MapResult<List<UserDto>>();
+                return getIdOfGroupOwnerResult.Error;
 
             var isMember = await organizationService
                 .IsUserMemberOfOrganization(getIdOfGroupOwnerResult.Data, userId);
 
-            var result = new OperationResult<List<UserDto>>();
             if (!isMember)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
-            result.Data = groupReader.GetGroupMembers(groupId);
-            return result;
+            return groupReader.GetGroupMembers(groupId);
         }
 
         public async Task<OperationResult<List<UserDto>>> GetAvailableUsers(int groupId)
@@ -62,20 +60,17 @@ namespace KtTest.Application_Services
             var userId = userContext.UserId;
             var getIdOfGroupOwnerResult = await organizationService.GetIdOfGroupOwner(groupId);
             if (!getIdOfGroupOwnerResult.Succeeded)
-                return getIdOfGroupOwnerResult.MapResult<List<UserDto>>();
+                return getIdOfGroupOwnerResult.Error;
 
             var isMember = await organizationService
                 .IsUserMemberOfOrganization(getIdOfGroupOwnerResult.Data, userId);
 
-            var result = new OperationResult<List<UserDto>>();
             if (!isMember)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
-            result.Data = groupReader.GetAvailableUsers(groupId, getIdOfGroupOwnerResult.Data);
-            return result;
+            return groupReader.GetAvailableUsers(groupId, getIdOfGroupOwnerResult.Data);
         }
 
         public async Task<OperationResult<int>> CreateGroup(CreateGroupDto createGroupDto)
@@ -91,9 +86,7 @@ namespace KtTest.Application_Services
             
             if (!isMember)
             {
-                var result = new OperationResult();
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             return await groupService.AddUserToGroup(addMemberDto.UserId, groupId);

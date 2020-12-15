@@ -3,9 +3,9 @@ using KtTest.Infrastructure.Data;
 using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
 using KtTest.Results;
+using KtTest.Results.Errors;
 using KtTest.Services;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,11 +38,9 @@ namespace KtTest.Readers
                 .Where(x => x.Id == testId)
                 .FirstOrDefaultAsync();
 
-            var result = new OperationResult<Dtos.Test.TestDto>();
             if (test == null)
             {
-                result.AddFailure(Failure.NotFound());
-                return result;
+                return new DataNotFoundError();
             }
 
             var dto = new TestDto
@@ -52,11 +50,10 @@ namespace KtTest.Readers
                 Questions = test.TestTemplate.TestItems.Select(x => questionMapper.MapToTestQuestionDto(x.Question)).ToList()
             };
 
-            result.Data = dto;
-            return result;
+            return dto;
         }
 
-        public async Task<PaginatedResult<ScheduledTestDto>> GetScheduledTest(int userId, int offset, int limit)
+        public async Task<OperationResult<Paginated<ScheduledTestDto>>> GetScheduledTest(int userId, int offset, int limit)
         {
             var tests = await dbContext.ScheduledTests
                 .Include(x => x.TestTemplate)
@@ -65,12 +62,10 @@ namespace KtTest.Readers
                 .Skip(offset).Take(limit + 1)
                 .ToListAsync();
 
-            var result = new PaginatedResult<ScheduledTestDto>();
-            result.Data = new Paginated<ScheduledTestDto>(limit, tests.Select(testMapper.MapToScheduledTestDto));
-            return result;
+            return new Paginated<ScheduledTestDto>(limit, tests.Select(testMapper.MapToScheduledTestDto));
         }
 
-        public PaginatedResult<Dtos.Test.TestHeaderDto> GetAvailableAndUpcomingTests(int userId, int offset, int limit)
+        public OperationResult<Paginated<Dtos.Test.TestHeaderDto>> GetAvailableAndUpcomingTests(int userId, int offset, int limit)
         {
             var tests = dbContext.UserTests
                 .Include(x => x.ScheduledTest)
@@ -81,14 +76,11 @@ namespace KtTest.Readers
                 .Select(testMapper.MapToTestHeaderDto)
                 .ToList();
 
-            var result = new PaginatedResult<Dtos.Test.TestHeaderDto>();
-            result.Data = new Paginated<Dtos.Test.TestHeaderDto>(limit, tests);
-            return result;
+            return new Paginated<Dtos.Test.TestHeaderDto>(limit, tests);
         }
 
         public OperationResult<Dtos.Wizard.TestTemplateDto> GetTestTemplate(int id, int authorId)
         {
-            var result = new OperationResult<Dtos.Wizard.TestTemplateDto>();
             var testTemplate = dbContext.TestTemplates
                 .Where(x => x.Id == id && x.AuthorId == authorId)
                 .Include(x => x.TestItems)
@@ -100,12 +92,10 @@ namespace KtTest.Readers
 
             if (testTemplate == null)
             {
-                result.AddFailure(Failure.NotFound());
-                return result;
+                return new DataNotFoundError();
             }
 
-            result.Data = testTemplate;
-            return result;
+            return testTemplate;
         }
 
         public async Task<OperationResult<Dtos.Test.TestResultsDto>> GetTestResultsDto(int testId)
@@ -120,11 +110,9 @@ namespace KtTest.Readers
                 .Join(dbContext.UserAnswers, x => x.Id, y => y.ScheduledTestId, (x, y) => new { x.TestTemplate, UserAnswer = y })
                 .ToListAsync();
 
-            var result = new OperationResult<Dtos.Test.TestResultsDto>();
             if (testAndQuestions.Count == 0)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
             var test = testAndQuestions[0].TestTemplate;
             var userAnswers = testAndQuestions.Select(x => x.UserAnswer).ToDictionary(x => x.QuestionId);
@@ -143,11 +131,10 @@ namespace KtTest.Readers
                 QuestionsWithResult = questionsWithResult
             };
 
-            result.Data = testResultsDto;
-            return result;
+            return testResultsDto;
         }
 
-        public PaginatedResult<Dtos.Wizard.TestTemplateHeaderDto> GetTestTemplateHeaders(int authorId, int offset, int limit)
+        public OperationResult<Paginated<Dtos.Wizard.TestTemplateHeaderDto>> GetTestTemplateHeaders(int authorId, int offset, int limit)
         {
             var tests = dbContext.TestTemplates
                 .Where(x => x.AuthorId == authorId)
@@ -156,22 +143,18 @@ namespace KtTest.Readers
                 .Take(limit + 1)
                 .Select(testMapper.MapToTestWizardHeaderDto);
 
-            var result = new PaginatedResult<Dtos.Wizard.TestTemplateHeaderDto>();
-            result.Data = new Paginated<Dtos.Wizard.TestTemplateHeaderDto>(limit, tests);
-            return result;
+            return new Paginated<Dtos.Wizard.TestTemplateHeaderDto>(limit, tests);
         }
 
         public OperationResult<List<QuestionAnswerDto>> GetUserAnswers(int userId, int testId)
         {
-            var result = new OperationResult<List<QuestionAnswerDto>>();
             var userAnswers = dbContext.UserAnswers
                 .Where(x => x.ScheduledTestId == testId && x.UserId == userId)
                 .OrderBy(x => x.QuestionId)
                 .Select(questionMapper.MapToTestQuestionAnswerDto)
                 .ToList();
 
-            result.Data = userAnswers;
-            return result;
+            return userAnswers;
         }
     }
 }

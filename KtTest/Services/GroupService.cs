@@ -1,6 +1,7 @@
 ﻿using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;
+using KtTest.Results.Errors;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,9 +26,7 @@ namespace KtTest.Services
             group.GroupMembers.Add(new GroupMember { UserId = userContext.UserId });
             dbContext.Groups.Add(group);
             await dbContext.SaveChangesAsync();
-            var result = new OperationResult<int>();
-            result.Data = group.Id;
-            return result;
+            return group.Id;
         }
 
         public async Task<OperationResult> AddUserToGroup(int userId, int groupId)
@@ -37,8 +36,7 @@ namespace KtTest.Services
             var result = new OperationResult();
             if (hasUserJoinedGroup)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             var groupMember = new GroupMember { GroupId = groupId, UserId = userId };
@@ -56,8 +54,6 @@ namespace KtTest.Services
 
         public async Task<List<UserInfo>> GetStudentsFromGroup(int groupId)
         {
-            var result = new OperationResult<List<UserInfo>>();
-
             var groupMembers = await dbContext.GroupMembers
                 .Where(x => x.GroupId == groupId)
                 .Include(x => x.User)

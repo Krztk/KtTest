@@ -1,9 +1,6 @@
 ﻿using KtTest.Dtos.Auth;
 using KtTest.Results;
 using KtTest.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace KtTest.Application_Services
@@ -20,7 +17,7 @@ namespace KtTest.Application_Services
         public async Task<OperationResult<LoginResponseDto>> Login(LoginDto loginDto)
         {
             return (await authService.AuthenticateAndGetToken(loginDto.Username, loginDto.Password))
-                .MapResult(x => new LoginResponseDto { Token = x });
+                .Then(x => new LoginResponseDto { Token = x });
         }
 
         public async Task<OperationResult> RegisterOrganizationOwner(RegisterDto registerDto)

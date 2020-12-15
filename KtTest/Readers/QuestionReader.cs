@@ -3,9 +3,8 @@ using KtTest.Infrastructure.Data;
 using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
 using KtTest.Results;
-using Microsoft.AspNetCore.Mvc.Formatters;
+using KtTest.Results.Errors;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,7 +22,7 @@ namespace KtTest.Readers
             this.questionMapper = questionMapper;
         }
 
-        public async Task<PaginatedResult<QuestionHeaderDto>> GetQuestionHeaders(int authorId, int offset, int limit)
+        public async Task<OperationResult<Paginated<QuestionHeaderDto>>> GetQuestionHeaders(int authorId, int offset, int limit)
         {
             var questionTests = await dbContext.Questions.Where(x => x.AuthorId == authorId).Take(limit + 1).Skip(offset)
                                                    .GroupJoin(dbContext.TestItems,
@@ -54,12 +53,10 @@ namespace KtTest.Readers
                 }
             }
 
-            var result = new PaginatedResult<QuestionHeaderDto>();
-            result.Data = new Paginated<QuestionHeaderDto>(limit, idHeaderDtos.Values);
-            return result;
+            return new Paginated<QuestionHeaderDto>(limit, idHeaderDtos.Values);
         }
 
-        public PaginatedResult<QuestionDto> GetQuestions(int authorId, int offset, int limit)
+        public OperationResult<Paginated<QuestionDto>> GetQuestions(int authorId, int offset, int limit)
         {
             var questions = dbContext.Questions
                 .Where(x => x.AuthorId == authorId)
@@ -70,9 +67,7 @@ namespace KtTest.Readers
                 .Select(questionMapper.MapToWizardQuestionDto)
                 .ToArray();
 
-            var result = new PaginatedResult<QuestionDto>();
-            result.Data = new Paginated<QuestionDto>(limit, questions);
-            return result;
+            return new Paginated<QuestionDto>(limit, questions);
         }
 
         public async Task<OperationResult<QuestionDto>> GetQuestion(int authorId, int questionId)
@@ -84,21 +79,17 @@ namespace KtTest.Readers
                 .Select(x => new { QuestionDto = questionMapper.MapToWizardQuestionDto(x), x.AuthorId })
                 .FirstOrDefaultAsync();
 
-            var result = new OperationResult<QuestionDto>();
             if (question == null)
             {
-                result.AddFailure(Failure.NotFound());
-                return result;
+                return new DataNotFoundError();
             }
 
             if (authorId != question.AuthorId)
             {
-                result.AddFailure(Failure.Unauthorized());
-                return result;
+                return new AuthorizationError();
             }
 
-            result.Data = question.QuestionDto;
-            return result;
+            return question.QuestionDto;
         }
     }
 }

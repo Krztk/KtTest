@@ -3,8 +3,8 @@ using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
 using KtTest.Readers;
 using KtTest.Results;
+using KtTest.Results.Errors;
 using KtTest.Services;
-using System;
 using System.Threading.Tasks;
 
 namespace KtTest.Application_Services
@@ -33,7 +33,7 @@ namespace KtTest.Application_Services
             this.userContext = userContext;
         }
 
-        public PaginatedResult<QuestionDto> GetQuestions(Pagination pagination)
+        public OperationResult<Paginated<QuestionDto>> GetQuestions(Pagination pagination)
         {
             return questionReader.GetQuestions(userContext.UserId, pagination.Offset, pagination.Limit);
         }
@@ -45,21 +45,18 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<int>> CreateQuestion(QuestionDto questionDto)
         {
-            var result = new OperationResult<int>();
             Answer answer = questionMapper.MapToAnswer(questionDto);
 
-            var categoriesProvided = questionDto.Categories.Count > 0;
-            if (categoriesProvided && !categoryService.DoCategoriesExist(questionDto.Categories))
+            var areCategoriesProvided = questionDto.Categories.Count > 0;
+            if (areCategoriesProvided && !categoryService.DoCategoriesExist(questionDto.Categories))
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
-            result.Data = await questionService.CreateQuestion(questionDto.Question, answer, questionDto.Categories);
-            return result;
+            return await questionService.CreateQuestion(questionDto.Question, answer, questionDto.Categories);
         }
 
-        public async Task<PaginatedResult<QuestionHeaderDto>> GetQuestionHeaders(Pagination pagination)
+        public async Task<OperationResult<Paginated<QuestionHeaderDto>>> GetQuestionHeaders(Pagination pagination)
         {
             return await questionReader.GetQuestionHeaders(userContext.UserId, pagination.Offset, pagination.Limit);
         }
@@ -71,14 +68,12 @@ namespace KtTest.Application_Services
             var isQuestionAuthor = await questionService.IsAuthorOfQuestion(userContext.UserId, questionId);
             if (!isQuestionAuthor)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             if (await testService.HasTestWithQuestionStarted(questionId))
             {
-                result.AddFailure(Failure.BadRequest("Cannot edit the question if there is a test which contains it that has already started"));
-                return result;
+                return new BadRequestError("Cannot edit the question if there is a test which contains it that has already started");
             }
 
             Answer answer = questionMapper.MapToAnswer(questionDto);

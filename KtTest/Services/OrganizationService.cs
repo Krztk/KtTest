@@ -1,9 +1,8 @@
 ﻿using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;
+using KtTest.Results.Errors;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -54,7 +53,6 @@ namespace KtTest.Services
 
         public async Task<OperationResult<UserInfo>> GetMember(int organizationOwner, int userId)
         {
-            var result = new OperationResult<UserInfo>();
             var user = await dbContext.Users
                 .Where(x => x.Id == userId && x.InvitedBy == organizationOwner)
                 .Select(x=>new UserInfo(x.Id, x.IsTeacher))
@@ -62,25 +60,21 @@ namespace KtTest.Services
 
             if (user == null)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
-            result.Data = user;
-            return result;
+
+            return user;
         }
 
         public async Task<OperationResult<int>> GetIdOfGroupOwner(int groupId)
         {
             var group = await dbContext.Groups.Where(x => x.Id == groupId).FirstOrDefaultAsync();
-            var result = new OperationResult<int>();
             if (group == null)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
-            result.Data = group.OwnerId;
-            return result;
+            return group.OwnerId;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;
+using KtTest.Results.Errors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -31,23 +32,19 @@ namespace KtTest.Services
 
         public async Task<OperationResult<string>> AuthenticateAndGetToken(string username, string password)
         {
-            var result = new OperationResult<string>();
             var user = await userManager.FindByNameAsync(username);
             if (user == null)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             var signInResult = await signInManager.PasswordSignInAsync(user, password, false, false);
             if (signInResult.Succeeded)
             {
-                result.Data = GenerateToken(user);
-                return result;
+                return GenerateToken(user);
             }
 
-            result.AddFailure(Failure.BadRequest("Username and password don't match."));
-            return result;
+            return new BadRequestError("Username and password don't match.");
         }
 
         public async Task<OperationResult> RegisterOrganizationOwner(string email, string username, string password)
@@ -62,8 +59,7 @@ namespace KtTest.Services
             var invitation = await dbContext.Invitations.FirstOrDefaultAsync(x => x.Code == code);
             if (invitation == null)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             var user = new AppUser
@@ -87,19 +83,21 @@ namespace KtTest.Services
         {
             var createUserResult = await userManager.CreateAsync(user, password);
 
-            var result = new OperationResult();
             if (createUserResult.Succeeded)
             {
-                return result;
+                return OperationResult.Ok();
             }
             else
             {
+                var sb = new StringBuilder();
+                var prefix = "";
                 foreach (var error in createUserResult.Errors)
                 {
-                    result.AddFailure(Failure.BadRequest($"{error.Code}: {error.Description}"));
+                    sb.Append($"{prefix}{error.Code}: {error.Description}");
+                    prefix = ", ";
                 }
 
-                return result;
+                return new BadRequestError(sb.ToString());
             }
         }
 

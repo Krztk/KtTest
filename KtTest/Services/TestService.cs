@@ -2,6 +2,7 @@
 using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;
+using KtTest.Results.Errors;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -26,15 +27,13 @@ namespace KtTest.Services
         public async Task<OperationResult<int>> CreateTestTemplate(string name, List<int> questionIds)
         {
             int authorId = userContext.UserId;
-            var result = new OperationResult<int>();
             var test = new TestTemplate(name, authorId, questionIds);
             dbContext.TestTemplates.Add(test);
             await dbContext.SaveChangesAsync();
-            result.Data = test.Id;
-            return result;
+            return test.Id;
         }
 
-        public async Task<PaginatedResult<TestTemplate>> GetTestTemplates(int offset, int limit)
+        public async Task<OperationResult<Paginated<TestTemplate>>> GetTestTemplates(int offset, int limit)
         {
             int authorId = userContext.UserId;
             var tests = await dbContext.TestTemplates
@@ -44,57 +43,47 @@ namespace KtTest.Services
                 .Take(limit + 1)
                 .ToListAsync();
 
-            var result = new PaginatedResult<TestTemplate>();
-            result.Data = new Paginated<TestTemplate>(limit, tests);
-            return result;
+            return new Paginated<TestTemplate>(limit, tests);
         }
 
         public async Task<OperationResult<bool>> CanGetTest(int testId, int studentId)
         {
-            var result = new OperationResult<bool>();
-
             var userTest = await dbContext.UserTests
                 .Where(x => x.ScheduledTestId == testId && x.UserId == studentId)
                 .FirstOrDefaultAsync();
 
             if (userTest == null)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             var test = await dbContext.ScheduledTests.Where(x => x.Id == testId).FirstOrDefaultAsync();
             var currentDate = dateTimeProvider.UtcNow;
             if (!userTest.StartDate.HasValue)
             {
-                result.Data = currentDate >= test.StartDate && currentDate <= test.EndDate;
-                return result;
+                return currentDate >= test.StartDate && currentDate <= test.EndDate;
             }
 
-            result.Data = currentDate >= userTest.StartDate && currentDate <= userTest.StartDate.Value.AddMinutes(test.Duration);
-            return result;
+            return currentDate >= userTest.StartDate && currentDate <= userTest.StartDate.Value.AddMinutes(test.Duration);
         }
 
         public async Task<OperationResult<GroupResults>> GetGroupResults(int testId)
         {
-            var result = new OperationResult<GroupResults>();
             var scheduledTest = await dbContext.ScheduledTests.Include(x => x.TestTemplate).FirstOrDefaultAsync(x => x.Id == testId);
             if (scheduledTest == null)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             if (scheduledTest.TestTemplate.AuthorId != userContext.UserId)
             {
-                result.AddFailure(Failure.Unauthorized());
-                return result;
+                return new AuthorizationError();
             }
 
             var testEndedResult = await HasTestComeToEnd(testId);
             if (!testEndedResult.Succeeded)
             {
-                return testEndedResult.MapResult<GroupResults>();
+                return testEndedResult.Error;
             }
 
             var query = from UserTest in dbContext.UserTests.Where(x => x.ScheduledTestId == testId)
@@ -128,8 +117,7 @@ namespace KtTest.Services
                 Results = testResults
             };
 
-            result.Data = groupResults;
-            return result;
+            return groupResults;
         }
 
         public void MarkTestAsStartedIfItHasntBeenMarkedAlready(int testId, int userId)
@@ -154,28 +142,24 @@ namespace KtTest.Services
 
             if (userTest == null)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             if (!userTest.StartDate.HasValue || userTest.EndDate.HasValue)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             var testDuration = await dbContext.ScheduledTests.Where(x => x.Id == testId).Select(x => x.Duration).FirstAsync();
             if (!CanAddAnswers(userTest.StartDate, testDuration))
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             bool contains = DoesTestContainQuestions(userAnswers.Select(x => x.QuestionId).ToList(), testId);
             if (!contains)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             userTest.SetEndDate(dateTimeProvider.UtcNow);
@@ -191,29 +175,25 @@ namespace KtTest.Services
 
             if (startDate <= utcNow || startDate >= endDate)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             var testTemplate = await dbContext.TestTemplates.FirstOrDefaultAsync(x => x.Id == testId);
 
             if (testTemplate == null)
             {
-                result.AddFailure(Failure.BadRequest());
-                return result;
+                return new BadRequestError();
             }
 
             if (userContext.UserId != testTemplate.AuthorId)
             {
-                result.AddFailure(Failure.Unauthorized());
-                return result;
+                return new AuthorizationError();
             }
 
             var numberOfQuestions = await dbContext.TestItems.Where(x => x.TestTemplateId == testId).CountAsync();
             if (numberOfQuestions == 0)
             {
-                result.AddFailure(Failure.BadRequest("Cannot publish test without questions"));
-                return result;
+                return new BadRequestError("Cannot publish test without questions");
             }
 
             IEnumerable<int> studentsIds = students.Select(x => x.Id);
@@ -246,16 +226,13 @@ namespace KtTest.Services
 
         public async Task<OperationResult<bool>> HasTestComeToEnd(int testId)
         {
-            var result = new OperationResult<bool>();
             var test = await dbContext.ScheduledTests.Where(x => x.Id == testId).Include(x => x.UserTests).FirstOrDefaultAsync();
             if (test == null)
             {
-                result.AddFailure(Failure.BadRequest($"Test with id {testId} does not exist"));
-                return result;
+                return new BadRequestError($"Test with id {testId} does not exist");
             }
 
-            result.Data = test.HasTestComeToEnd(dateTimeProvider);
-            return result;
+            return test.HasTestComeToEnd(dateTimeProvider);
         }
 
         public async Task<bool> HasTestWithQuestionStarted(int questionId)

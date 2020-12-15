@@ -1,9 +1,7 @@
 ﻿using KtTest.Results;
+using KtTest.Results.Errors;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace KtTest
 {
@@ -17,7 +15,7 @@ namespace KtTest
             }
             else
             {
-                return PrepareFailureResult(result.Failures);
+                return PrepareFailureResult(result.Error);
             }
         }
 
@@ -29,24 +27,19 @@ namespace KtTest
             }
             else
             {
-                return PrepareFailureResult(result.Failures);
+                return PrepareFailureResult(result.Error);
             }
         }
 
-        private IActionResult PrepareFailureResult(IEnumerable<Failure> failures)
+        private IActionResult PrepareFailureResult(ErrorBase error)
         {
-            var firstFailure = failures.First();
-            switch (firstFailure.Status)
+            return error switch
             {
-                case FailureType.BadRequest:
-                    return BadRequest(firstFailure.Description);
-                case FailureType.NotFound:
-                    return NotFound(firstFailure.Description);
-                case FailureType.Unauthorized:
-                    return Unauthorized(firstFailure.Description);
-                default:
-                    return BadRequest();
-            }
+                BadRequestError _ => BadRequest(error),
+                AuthorizationError _ => Unauthorized(error),
+                DataNotFoundError _ => NotFound(error),
+                _ => StatusCode(StatusCodes.Status500InternalServerError, error)
+            };
         }
     }
 }
