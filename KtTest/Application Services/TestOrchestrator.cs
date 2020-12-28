@@ -97,7 +97,7 @@ namespace KtTest.Application_Services
         public async Task<OperationResult<GroupResultsDto>> GetTestResultTeacher(int testId)
         {
             var result = await testService.GetGroupResults(testId);
-            return result.Then(testMapper.MapToGroupResultsDto);
+            return result.Then<GroupResultsDto>(x => testMapper.MapToGroupResultsDto(x));
         }
 
         public async Task<OperationResult<Dtos.Test.TestDto>> GetTest(int id)

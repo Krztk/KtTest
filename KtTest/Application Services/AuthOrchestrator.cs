@@ -17,7 +17,7 @@ namespace KtTest.Application_Services
         public async Task<OperationResult<LoginResponseDto>> Login(LoginDto loginDto)
         {
             return (await authService.AuthenticateAndGetToken(loginDto.Username, loginDto.Password))
-                .Then(x => new LoginResponseDto { Token = x });
+                .Then<LoginResponseDto>(x => new LoginResponseDto { Token = x });
         }
 
         public async Task<OperationResult> RegisterOrganizationOwner(RegisterDto registerDto)

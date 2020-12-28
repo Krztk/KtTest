@@ -35,9 +35,9 @@ namespace KtTest.Results
         {
         }
 
-        public OperationResult<TResult> Then<TResult>(Func<TData, TResult> func)
+        public OperationResult<TResult> Then<TResult>(Func<TData, OperationResult<TResult>> func)
         {
-            return Succeeded ? (OperationResult<TResult>)func(Data) : Error;
+            return Succeeded ? func(Data) : Error;
         }
 
         public T Match<T>(Func<ErrorBase, T> onError, Func<TData, T> onSuccess)
