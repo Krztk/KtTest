@@ -8,6 +8,7 @@ namespace KtTest.Models
     {
         public int NumericValue { get; private set; }
         public ChoiceAnswerType ChoiceAnswerType { get; private set; }
+        public bool AllValidChoicesRequired { get; private set; }
         public List<Choice> Choices { get; private set; }
 
         private ChoiceAnswer()
@@ -15,7 +16,7 @@ namespace KtTest.Models
 
         }
 
-        public ChoiceAnswer(List<Choice> choices, ChoiceAnswerType choiceAnswerType)
+        public ChoiceAnswer(List<Choice> choices, ChoiceAnswerType choiceAnswerType, float maxScore, bool allValidChoicesRequired = true)
         {
             if (choices == null)
                 throw new ArgumentNullException();
@@ -23,9 +24,11 @@ namespace KtTest.Models
             ChoiceAnswerType = choiceAnswerType;
             Choices = choices;
             NumericValue = GetNumericValueFromChoices(choices);
+            MaxScore = maxScore;
+            AllValidChoicesRequired = allValidChoicesRequired;
         }
 
-        public override bool ValidateAnswer(UserAnswer userAnswer)
+        public override float GetScore(UserAnswer userAnswer)
         {
             var choiceAnswer = userAnswer as ChoiceUserAnswer;
 
@@ -35,7 +38,39 @@ namespace KtTest.Models
             if (choiceAnswer.QuestionId != QuestionId)
                 throw new Exception("Answer.QuestionId doesn't match UserAnswer.QuestionId");
 
-            return NumericValue == choiceAnswer.Value;
+            if (NumericValue == choiceAnswer.Value)
+                return MaxScore;
+
+            if (AllValidChoicesRequired)
+                return 0f;
+
+            int userAnswerNumericValue = choiceAnswer.Value;
+            int answerNumericValue = NumericValue;
+            int numberOfValidChoices = 0;
+            int numberOfUsersValidChoices = 0;
+            while (answerNumericValue != 0)
+            {
+                bool isChoiceValid = (answerNumericValue & 1) == 1;
+                bool isUserChoiceValid = (userAnswerNumericValue & 1) == 1;
+
+                if (isUserChoiceValid && !isChoiceValid)
+                    return 0f;
+
+                if (isChoiceValid)
+                {
+                    numberOfValidChoices++;
+                    if (isUserChoiceValid)
+                        numberOfUsersValidChoices++;
+                }
+
+                userAnswerNumericValue >>= 1;
+                answerNumericValue >>= 1;
+            }
+
+            if (userAnswerNumericValue != 0)
+                return 0f;
+
+            return MaxScore - MaxScore / numberOfValidChoices * (numberOfValidChoices - numberOfUsersValidChoices);
         }
 
         private int GetNumericValueFromChoices(List<Choice> choices)

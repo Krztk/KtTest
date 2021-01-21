@@ -92,7 +92,7 @@ namespace KtTest.Infrastructure.Mappers
             return new GroupResultsDto
             {
                 Ended = results.Ended,
-                NumberOfQuestion = results.NumberOfQuestion,
+                MaxTestScore = results.MaxTestScore,
                 TestId = results.ScheduledTestId,
                 TestName = results.TestName,
                 Results = results.Results.Select(MapToUserTestResultDto).ToList()
@@ -104,7 +104,7 @@ namespace KtTest.Infrastructure.Mappers
             return new UserTestResultDto
             {
                 Id = result.UserId,
-                NumberOfValidAnswers = result.NumberOfValidAnswers,
+                UserScore = result.UserScore,
                 Username = result.Username,
                 Status = result.Status.ToString(),
             };

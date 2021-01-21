@@ -30,22 +30,21 @@ namespace KtTest.Models
             TestStatus testStatus = GetTestStatus();
             if (testStatus == TestStatus.Completed)
             {
-                int validAnswers = GetNumberOfValidAnswers();
-                return new UserTestResult(UserName, validAnswers, UserTest.UserId, testStatus);
+                float userScore = GetTestScore();
+                return new UserTestResult(UserName, userScore, UserTest.UserId, testStatus);
             }
 
             return new UserTestResult(UserName, null, UserTest.UserId, testStatus);
         }
 
-        private int GetNumberOfValidAnswers()
+        private float GetTestScore()
         {
-            int numberOfValidAnswers = 0;
+            float userScore = 0f;
             foreach (var answerPair in answerPairs)
             {
-                if (answerPair.IsUserAnswerValid())
-                    numberOfValidAnswers++;
+                userScore += answerPair.GetUserScore();
             }
-            return numberOfValidAnswers;
+            return userScore;
         }
 
         private TestStatus GetTestStatus()
@@ -84,9 +83,9 @@ namespace KtTest.Models
             Answer = answer;
         }
 
-        public bool IsUserAnswerValid()
+        public float GetUserScore()
         {
-            return Answer.ValidateAnswer(UserAnswer);
+            return Answer.GetScore(UserAnswer);
         }
     }
 }

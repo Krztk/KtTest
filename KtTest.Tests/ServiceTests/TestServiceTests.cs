@@ -17,11 +17,12 @@ namespace KtTest.Tests.ServiceTests
         {
             //arrange
             var userId = 11;
+            float maxScore = 3f;
             var questionsInDb = new List<Question>
             {
-                new Question("1st question", new WrittenAnswer("1st question's answer"), userId),
-                new Question("2st question", new WrittenAnswer("2nd question's answer"), userId),
-                new Question("3st question", new WrittenAnswer("3rd question's answer"), userId),
+                new Question("1st question", new WrittenAnswer("1st question's answer", maxScore), userId),
+                new Question("2st question", new WrittenAnswer("2nd question's answer", maxScore), userId),
+                new Question("3st question", new WrittenAnswer("3rd question's answer", maxScore), userId),
             };
             dbContext.Questions.AddRange(questionsInDb);
             dbContext.SaveChanges();
@@ -294,10 +295,11 @@ namespace KtTest.Tests.ServiceTests
 
         private List<int> SeedQuestions(int authorId)
         {
+            float maxScore = 3f;
             var questions = new List<Question>
             {
-                new Question("2+2", new WrittenAnswer("4"), authorId),
-                new Question("1+2*3", new WrittenAnswer("7"), authorId),
+                new Question("2+2", new WrittenAnswer("4", maxScore), authorId),
+                new Question("1+2*3", new WrittenAnswer("7", maxScore), authorId),
                 new Question("Select numbers divisible by 4",
                     new ChoiceAnswer(
                         new List<Choice>
@@ -307,7 +309,8 @@ namespace KtTest.Tests.ServiceTests
                             new Choice {Content = "6", Valid = false},
                             new Choice {Content = "92", Valid = true},
                         },
-                        ChoiceAnswerType.MultipleChoice),
+                        ChoiceAnswerType.MultipleChoice,
+                        maxScore),
                     authorId)
             };
 

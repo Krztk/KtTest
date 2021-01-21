@@ -10,6 +10,7 @@ namespace KtTest.Dtos.Wizard
         public int Id { get; set; }
         public string Question { get; set; }
         public List<int> Categories { get; set; } = new List<int>();
+        public float Score { get; set; }
     }
 
     public class QuestionWithWrittenAnswerDto : QuestionDto
@@ -20,6 +21,7 @@ namespace KtTest.Dtos.Wizard
     public class QuestionWithChoiceAnswersDto : QuestionDto
     {
         public ChoiceAnswerType ChoiceAnswerType { get; set; }
+        public bool AllValidChoicesRequired { get; set; }
         public List<ChoiceDto> Choices { get; set; }
     }
 
@@ -34,6 +36,7 @@ namespace KtTest.Dtos.Wizard
         public QuestionDtoValidator()
         {
             RuleFor(x => x.Question).NotEmpty().MaximumLength(DataConstraints.Question.MaxQuestionLength);
+            RuleFor(x => x.Score).GreaterThan(DataConstraints.Question.MinScore).LessThanOrEqualTo(DataConstraints.Question.MaxScore);
         }
     }
 
@@ -50,7 +53,6 @@ namespace KtTest.Dtos.Wizard
         public QuestionWithChoiceAnswersDtoValidator()
         {
             RuleFor(x => x.Choices).NotEmpty();
-            
         }
     }
 }

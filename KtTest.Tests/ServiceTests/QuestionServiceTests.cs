@@ -23,8 +23,8 @@ namespace KtTest.Tests.ServiceTests
             var userContextMock = new Mock<IUserContext>();
             userContextMock.Setup(x => x.UserId).Returns(userId);
             var service = new QuestionService(dbContext, userContextMock.Object);
-
-            var answer = new WrittenAnswer("4");
+            float maxScore = 3f;
+            var answer = new WrittenAnswer("4", maxScore);
             var questionContent = "2 + 2 = ?";
 
             //act
@@ -49,8 +49,8 @@ namespace KtTest.Tests.ServiceTests
             var userContextMock = new Mock<IUserContext>();
             userContextMock.Setup(x => x.UserId).Returns(userId);
             var service = new QuestionService(dbContext, userContextMock.Object);
-
-            var answer = new WrittenAnswer("4");
+            float maxScore = 3f;
+            var answer = new WrittenAnswer("4", maxScore);
             var questionContent = "2 + 2 = ?";
             var categoryIds = categories.Select(x => x.Id);
 
@@ -74,10 +74,11 @@ namespace KtTest.Tests.ServiceTests
         {
             //arrange
             var userId = 11;
+            float maxScore = 3f;
             var questionsInDb = new List<Question>
             {
-                new Question("1st question", new WrittenAnswer("1st question's answer"), userId),
-                new Question("2st question", new WrittenAnswer("2nd question's answer"), userId),
+                new Question("1st question", new WrittenAnswer("1st question's answer", maxScore), userId),
+                new Question("2st question", new WrittenAnswer("2nd question's answer", maxScore), userId),
             };
             dbContext.Questions.AddRange(questionsInDb);
             dbContext.SaveChanges();
@@ -98,7 +99,8 @@ namespace KtTest.Tests.ServiceTests
         {
             //arrange
             var userId = 8;
-            var answer = new WrittenAnswer("Answer to edit");
+            float maxScore = 6f;
+            var answer = new WrittenAnswer("Answer to edit", maxScore);
             var question = new Question("Question to edit", answer, userId);
             dbContext.Questions.Add(question);
             dbContext.SaveChanges();
@@ -118,7 +120,8 @@ namespace KtTest.Tests.ServiceTests
                     Valid = true
                 },
             };
-            var newAnswer = new ChoiceAnswer(choices, ChoiceAnswerType.SingleChoice);
+            float newMaxScore = 10f;
+            var newAnswer = new ChoiceAnswer(choices, ChoiceAnswerType.SingleChoice, newMaxScore);
 
             //act
             var result = await service.UpdateQuestion(question.Id, "New content", newAnswer, null);
@@ -130,6 +133,7 @@ namespace KtTest.Tests.ServiceTests
             choiceAnswer.Should().NotBeNull();
             choiceAnswer.NumericValue.Should().Be(1);
             choiceAnswer.Choices.Should().BeEquivalentTo(choices);
+            choiceAnswer.MaxScore.Should().Be(newMaxScore);
         }
 
         [Fact]
@@ -137,7 +141,8 @@ namespace KtTest.Tests.ServiceTests
         {
             //arrange
             var userId = 8;
-            var answer = new WrittenAnswer("Answer to edit");
+            float maxScore = 6f;
+            var answer = new WrittenAnswer("Answer to edit", maxScore);
             var question = new Question("Question to edit", answer, userId);
             dbContext.Questions.Add(question);
             dbContext.SaveChanges();
@@ -145,7 +150,7 @@ namespace KtTest.Tests.ServiceTests
             var userContextMock = new Mock<IUserContext>();
             userContextMock.Setup(x => x.UserId).Returns(userId);
             var service = new QuestionService(dbContext, userContextMock.Object);
-            var newAnswer = new WrittenAnswer("New answer");
+            var newAnswer = new WrittenAnswer("New answer", maxScore);
 
             //act
             Func<Task<OperationResult>> codeUnderTest = async () => await service.UpdateQuestion(question.Id, "New content", newAnswer, null);

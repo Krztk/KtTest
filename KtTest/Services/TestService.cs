@@ -92,8 +92,13 @@ namespace KtTest.Services
                         from Answer in dbContext.Answers.Where(an => an.QuestionId == UserAnswer.QuestionId).DefaultIfEmpty()
                         select new { UserTest, UserId = User.Id, User.UserName, UserAnswer, Answer };
 
-            int numberOfQuestions = await dbContext.TestItems.Where(x => x.TestTemplateId == scheduledTest.TestTemplateId).CountAsync();
             var queryResults = await query.ToArrayAsync();
+            var allAnswers = await dbContext.TestItems.Include(x => x.Question).ThenInclude(x => x.Answer)
+                .Where(x => x.TestTemplateId == scheduledTest.TestTemplateId)
+                .Select(x=>x.Question.Answer)
+                .ToArrayAsync();
+
+            float maxTestScore = allAnswers.Select(x => x.MaxScore).Aggregate((x, y) => x + y);
 
             var userIdTestAnswer = new Dictionary<int, TestAnswers>();
             foreach (var queryResult in queryResults)
@@ -111,7 +116,7 @@ namespace KtTest.Services
             var groupResults = new GroupResults
             {
                 Ended = testEndedResult.Data,
-                NumberOfQuestion = numberOfQuestions,
+                MaxTestScore = maxTestScore,
                 ScheduledTestId = scheduledTest.Id,
                 TestName = scheduledTest.TestTemplate.Name,
                 Results = testResults

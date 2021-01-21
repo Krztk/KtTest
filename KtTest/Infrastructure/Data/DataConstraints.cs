@@ -22,6 +22,8 @@ namespace KtTest.Infrastructure.Data
         {
             public static int MaxQuestionLength => 512;
             public static int MaxAnswerLength => 256;
+            public static float MaxScore => 20f;
+            public static float MinScore => 0f;
         }
 
         public class Answer

@@ -12,12 +12,13 @@ namespace KtTest.Models
 
         }
 
-        public WrittenAnswer(string value)
+        public WrittenAnswer(string value, float maxScore)
         {
             Value = value;
+            MaxScore = maxScore;
         }
 
-        public override bool ValidateAnswer(UserAnswer userAnswer)
+        public override float GetScore(UserAnswer userAnswer)
         {
             var writtenAnswer = userAnswer as WrittenUserAnswer;
 
@@ -27,7 +28,7 @@ namespace KtTest.Models
             if (writtenAnswer.QuestionId != QuestionId)
                 throw new Exception("Answer.QuestionId doesn't match UserAnswer.QuestionId");
 
-            return writtenAnswer.Value == Value;
+            return writtenAnswer.Value == Value ? MaxScore : 0;
         }
     }
 }

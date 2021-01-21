@@ -2,10 +2,8 @@
 using KtTest.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace KtTest.Infrastructure.JsonConverters
 {
@@ -122,6 +120,14 @@ namespace KtTest.Infrastructure.JsonConverters
                             }
                             question.Categories = categories;
                             break;
+                        case "score":
+                            float score = reader.GetSingle();
+                            question.Score = score;
+                            break;
+                        case "allValidChoicesRequired":
+                            bool allValidChoicesRequired = reader.GetBoolean();
+                            ((QuestionWithChoiceAnswersDto)question).AllValidChoicesRequired = allValidChoicesRequired;
+                            break;
                     }
                 }
             }
@@ -140,6 +146,7 @@ namespace KtTest.Infrastructure.JsonConverters
             else if (value is QuestionWithChoiceAnswersDto choiceAnswer)
             {
                 writer.WriteNumber("t", (int)GetTypeDiscriminator(choiceAnswer));
+                writer.WriteBoolean("allValidChoicesRequired", choiceAnswer.AllValidChoicesRequired);
                 writer.WriteStartArray("choices");
 
                 if (choiceAnswer.Choices != null)
@@ -155,6 +162,7 @@ namespace KtTest.Infrastructure.JsonConverters
 
             writer.WriteString("question", value.Question);
             writer.WriteNumber("id", value.Id);
+            writer.WriteNumber("score", value.Score);
             writer.WriteStartArray("categories");
             if (value.Categories != null)
             {

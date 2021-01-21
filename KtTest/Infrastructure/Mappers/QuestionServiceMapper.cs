@@ -3,7 +3,6 @@ using KtTest.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace KtTest.Infrastructure.Mappers
 {
@@ -112,6 +111,7 @@ namespace KtTest.Infrastructure.Mappers
                 {
                     Id = question.Id,
                     Question = question.Content,
+                    Score = question.Answer.MaxScore,
                     Answer = writtenAnswer.Value
                 };
             }
@@ -123,6 +123,8 @@ namespace KtTest.Infrastructure.Mappers
                     ChoiceAnswerType = choiceAnswer.ChoiceAnswerType,
                     Categories = question.QuestionCategories.Select(x => x.CategoryId).ToList(),
                     Question = question.Content,
+                    Score = question.Answer.MaxScore,
+                    AllValidChoicesRequired = choiceAnswer.AllValidChoicesRequired,
                     Choices = choiceAnswer.Choices.Select(x => new Dtos.Wizard.ChoiceDto { Valid = x.Valid, Content = x.Content }).ToList()
                 };
             }
@@ -140,11 +142,11 @@ namespace KtTest.Infrastructure.Mappers
                     .Select(x => new Choice { Content = x.Content, Valid = x.Valid })
                     .ToList();
 
-                answer = new ChoiceAnswer(choices, choiceAnswer.ChoiceAnswerType);
+                answer = new ChoiceAnswer(choices, choiceAnswer.ChoiceAnswerType, choiceAnswer.Score);
             }
             else if (dto is Dtos.Wizard.QuestionWithWrittenAnswerDto writtenAnswer)
             {
-                answer = new WrittenAnswer(writtenAnswer.Answer);
+                answer = new WrittenAnswer(writtenAnswer.Answer, writtenAnswer.Score);
             }
             else
                 throw new Exception("Cannot convert into valid Answer");

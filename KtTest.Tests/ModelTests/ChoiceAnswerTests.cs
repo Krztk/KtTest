@@ -7,6 +7,7 @@ namespace KtTest.Tests.ModelTests
 {
     public class ChoiceAnswerTests
     {
+        public static float MaxScore = 6f;
         public static IEnumerable<object[]> GetValidChoiceAnswerContructorParamaters()
         {
             yield return new object[]
@@ -20,7 +21,8 @@ namespace KtTest.Tests.ModelTests
                     new Choice { Content = "Choice 4", Valid = true },
                 },
                 ChoiceAnswerType.MultipleChoice,
-                13
+                13,
+                MaxScore
             };
             yield return new object[]
             {
@@ -33,7 +35,8 @@ namespace KtTest.Tests.ModelTests
                     new Choice { Content = "Choice 4", Valid = true },
                 },
                 ChoiceAnswerType.SingleChoice,
-                1
+                1,
+                MaxScore
             };
             yield return new object[]
             {
@@ -46,16 +49,17 @@ namespace KtTest.Tests.ModelTests
                     new Choice { Content = "Choice 4", Valid = true },
                 },
                 ChoiceAnswerType.MultipleChoice,
-                9
+                9,
+                MaxScore
             };
         }
 
         [Theory]
         [MemberData(nameof(GetValidChoiceAnswerContructorParamaters))]
-        public void Constructor_ValidData_CreatesObjectWithCalculatedNumericValue(List<Choice> choices, ChoiceAnswerType choiceAnswerType, int expectedNumericValue)
+        public void Constructor_ValidData_CreatesObjectWithCalculatedNumericValue(List<Choice> choices, ChoiceAnswerType choiceAnswerType, int expectedNumericValue, float maxScore)
         {
             //act
-            ChoiceAnswer choiceAnswer = new ChoiceAnswer(choices, choiceAnswerType);
+            ChoiceAnswer choiceAnswer = new ChoiceAnswer(choices, choiceAnswerType, maxScore);
 
             //assert
             choiceAnswer.NumericValue.Should().Be(expectedNumericValue);

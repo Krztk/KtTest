@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public int QuestionId { get; set; }
-        public abstract bool ValidateAnswer(UserAnswer userAnswer);
+        public float MaxScore { get; set; }
+        public abstract float GetScore(UserAnswer userAnswer);
     }
 }
