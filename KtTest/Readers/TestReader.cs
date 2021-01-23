@@ -98,7 +98,7 @@ namespace KtTest.Readers
             return testTemplate;
         }
 
-        public async Task<OperationResult<Dtos.Test.TestResultsDto>> GetTestResultsDto(int testId)
+        public async Task<OperationResult<Dtos.Test.TestResultsDto>> GetTestResultsDto(int testId, int userId)
         {
             var testAndQuestions = await dbContext.ScheduledTests
                 .Include(x => x.TestTemplate)
@@ -106,8 +106,8 @@ namespace KtTest.Readers
                         .ThenInclude(x => x.Question)
                             .ThenInclude(x => x.Answer)
                                 .ThenInclude(x => ((ChoiceAnswer)x).Choices)
-                .Where(x => x.Id == testId)
-                .Join(dbContext.UserAnswers, x => x.Id, y => y.ScheduledTestId, (x, y) => new { x.TestTemplate, UserAnswer = y })
+                .Join(dbContext.UserAnswers, x => x.Id, y => y.ScheduledTestId, (x, y) => new { TestId = x.Id, x.TestTemplate, UserAnswer = y })
+                .Where(x => x.UserAnswer.UserId == userId && x.TestId == testId)
                 .ToListAsync();
 
             if (testAndQuestions.Count == 0)

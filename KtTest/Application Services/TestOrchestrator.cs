@@ -91,7 +91,7 @@ namespace KtTest.Application_Services
                 return new BadRequestError("Test hasn't come to end yet");
             }
 
-            return await testReader.GetTestResultsDto(testId);
+            return await testReader.GetTestResultsDto(testId, userContext.UserId);
         }
 
         public async Task<OperationResult<GroupResultsDto>> GetTestResultTeacher(int testId)
