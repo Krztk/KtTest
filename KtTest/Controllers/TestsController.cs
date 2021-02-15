@@ -45,7 +45,7 @@ namespace KtTest.Controllers
 
         [Authorize(Policy = "EmployeeOnly")]
         [HttpPost]
-        public async Task<IActionResult> CreateTestTemplate(CreateTestDto createTestDto)
+        public async Task<IActionResult> CreateTestTemplate(CreateTestTemplateDto createTestDto)
         {
             var result = await testOrchestrator.CreateTestTemplate(createTestDto);
             return ActionResult(result);

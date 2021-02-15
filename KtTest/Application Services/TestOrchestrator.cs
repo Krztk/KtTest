@@ -39,7 +39,7 @@ namespace KtTest.Application_Services
             this.dateTimeProvider = dateTimeProvider;
         }
 
-        public async Task<OperationResult<int>> CreateTestTemplate(Dtos.Wizard.CreateTestDto testDto)
+        public async Task<OperationResult<int>> CreateTestTemplate(Dtos.Wizard.CreateTestTemplateDto testDto)
         {
             var doQuestionsExist = questionService.DoQuestionsExist(testDto.QuestionIds);
             if (!doQuestionsExist)
