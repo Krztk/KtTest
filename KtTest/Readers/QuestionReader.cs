@@ -5,7 +5,6 @@ using KtTest.Models;
 using KtTest.Results;
 using KtTest.Results.Errors;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,14 +23,16 @@ namespace KtTest.Readers
 
         public async Task<OperationResult<Paginated<QuestionHeaderDto>>> GetQuestionHeaders(int authorId, int offset, int limit)
         {
-            var questionTests = await dbContext.Questions.Where(x => x.AuthorId == authorId).Take(limit + 1).Skip(offset)
-                                                   .GroupJoin(dbContext.TestItems,
-                                                           x => x.Id,
-                                                           y => y.QuestionId,
-                                                           (x, y) => new { x.Id, x.Content, TestItems = y })
-                                                   .SelectMany(x => x.TestItems.DefaultIfEmpty(),
-                                                               (x, y) => new { x.Id, x.Content, TestItem = y })
-                                                   .ToArrayAsync();
+            var questionTests = await dbContext
+                .Questions
+                .FromSqlInterpolated($"SELECT Id, Content from Questions WHERE AuthorId = {authorId} ORDER BY Id DESC OFFSET {offset} ROWS FETCH NEXT {limit + 1} ROWS ONLY")
+                .GroupJoin(dbContext.TestItems,
+                    x => x.Id,
+                    y => y.QuestionId,
+                    (x, y) => new { x.Id, x.Content, TestItem = y })
+                .SelectMany(x => x.TestItem.DefaultIfEmpty(),
+                    (x, y) => new { x.Id, x.Content, TestItem = y })
+                .ToArrayAsync();
 
             var idHeaderDtos = new Dictionary<int, QuestionHeaderDto>();
             foreach (var question in questionTests)
