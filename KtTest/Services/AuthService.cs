@@ -101,7 +101,7 @@ namespace KtTest.Services
             }
         }
 
-        private string GenerateToken(AppUser user)
+        public string GenerateToken(AppUser user)
         {
 
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Symmetric:Key"]));
@@ -124,8 +124,8 @@ namespace KtTest.Services
             }
 
             var tokeOptions = new JwtSecurityToken(
-                issuer: "http://localhost:5000",
-                audience: "http://localhost:5000",
+                issuer: configuration["Jwt:ValidIssuer"],
+                audience: configuration["Jwt:ValidAudience"],
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(25),
                 signingCredentials: signinCredentials

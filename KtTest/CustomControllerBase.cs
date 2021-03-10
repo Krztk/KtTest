@@ -38,7 +38,7 @@ namespace KtTest
                 BadRequestError _ => BadRequest(error),
                 AuthorizationError _ => Unauthorized(error),
                 DataNotFoundError _ => NotFound(error),
-                _ => StatusCode(StatusCodes.Status500InternalServerError, error)
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
             };
         }
     }
