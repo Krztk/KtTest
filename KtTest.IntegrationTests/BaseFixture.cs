@@ -1,10 +1,13 @@
 ﻿using KtTest.Infrastructure.Data;
 using KtTest.IntegrationTests.Helpers;
 using KtTest.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Respawn;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -24,23 +27,11 @@ namespace KtTest.IntegrationTests
         private readonly IServiceScopeFactory scopeFactory;
         private readonly Checkpoint checkpoint;
         public JsonSerializerOptions jsonSerializerOptions;
-        public int UserId { get; }
-        private string _token = null;
-        public string Token
-        {
-            get
-            {
-                if (_token != null)
-                    return _token;
+        public int UserId { get; private set; }
 
-                using (var scope = scopeFactory.CreateScope())
-                {
-                    var authService = scope.ServiceProvider.GetRequiredService<AuthService>();
-                    _token = authService.GenerateToken(new Models.AppUser() { Id = UserId, InvitedBy = null, IsTeacher = true });
-                    return _token;
-                }
-            }
-        }
+        public List<Models.AppUser> OrganizationOwners { get; set; } = new List<Models.AppUser>();
+        public Dictionary<int, List<Models.AppUser>> OrganizationOwnerMembers { get; set; } = new Dictionary<int, List<Models.AppUser>>();
+        public Models.AppUser TestUser;
 
         public BaseFixture()
         {
@@ -48,9 +39,7 @@ namespace KtTest.IntegrationTests
             configuration = factory.Services.GetRequiredService<IConfiguration>();
             scopeFactory = factory.Services.GetRequiredService<IServiceScopeFactory>();
             jsonSerializerOptions = JsonSerializerOptionsHelper.CreateOptions();
-            UserId = 1;
             client = factory.CreateClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
             checkpoint = new Checkpoint();
         }
 
@@ -90,9 +79,67 @@ namespace KtTest.IntegrationTests
         public Task<T> ExecuteDbContext<T>(Func<AppDbContext, Task<T>> action)
             => ExecuteScope(sp => action(sp.GetService<AppDbContext>()));
 
-        public Task InitializeAsync()
+        public Task AddUser(Models.AppUser user)
         {
-            return checkpoint.Reset(configuration.GetConnectionString("DefaultConnection"));
+            Func<UserManager<Models.AppUser>, Task> action = async x =>
+            {
+                var result = await x.CreateAsync(user, "password");
+                if (!result.Succeeded)
+                    throw new Exception(string.Join(",", result.Errors));
+            };
+            return ExecuteScope(sp => action(sp.GetService<UserManager<Models.AppUser>>()));
+        }
+
+        private async Task AddOrganizationOwners()
+        {
+            for (int i = 1; i<=4; i++)
+                OrganizationOwners.Add(new Models.AppUser { UserName = $"Owner{i}", IsTeacher = true, InvitedBy = null });
+
+            foreach (var owner in OrganizationOwners)
+            {
+                await AddUser(owner);
+            }
+        }
+
+        private async Task AddOrganizationMembers()
+        {
+            foreach (var owner in OrganizationOwners)
+            {
+                if (owner.Id == 0)
+                    throw new Exception("Wrong user ID");
+
+                for (int i = 1; i <= 3; i++)
+                {
+                    var member = new Models.AppUser { UserName = $"user{i}_invitedby_{owner.Id}", IsTeacher = false, InvitedBy = owner.Id };
+                    if (OrganizationOwnerMembers.ContainsKey(owner.Id))
+                    {
+                        OrganizationOwnerMembers[owner.Id].Add(member);
+                    }
+                    else
+                        OrganizationOwnerMembers.Add(owner.Id, new List<Models.AppUser> { member });
+                }
+            }
+
+            foreach (var member in OrganizationOwnerMembers.Values.SelectMany(x => x))
+            {
+                await AddUser(member);;
+            }
+        }
+
+        public async Task InitializeAsync()
+        {
+            await checkpoint.Reset(configuration.GetConnectionString("DefaultConnection"));
+            await AddOrganizationOwners();
+            await AddOrganizationMembers();
+            TestUser = OrganizationOwners[0];
+            UserId = TestUser.Id;
+            var token = String.Empty;
+            using (var scope = scopeFactory.CreateScope())
+            {
+                var authService = scope.ServiceProvider.GetRequiredService<AuthService>();
+                token = authService.GenerateToken(TestUser);
+            }
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
         public Task DisposeAsync()

@@ -69,7 +69,7 @@ namespace KtTest.IntegrationTests
         [Fact]
         public async Task ShouldReturnAllQuestions()
         {
-            int authorId = 1;
+            int authorId = fixture.UserId;
             var questions = new List<Question>();
             var choices = new List<Choice>()
             {
