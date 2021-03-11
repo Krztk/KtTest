@@ -1,5 +1,7 @@
 ﻿using FluentAssertions;
 using KtTest.Dtos.Groups;
+using KtTest.Dtos.Organizations;
+using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -68,6 +70,55 @@ namespace KtTest.IntegrationTests
             var groupFromDb = await fixture.ExecuteDbContext(x => x.Groups.Include(x => x.GroupMembers).FirstOrDefaultAsync(x => x.Id == groupId));
             groupFromDb.GroupMembers.Should().HaveCount(3);
             groupFromDb.GroupMembers.Select(x => x.UserId).Should().BeEquivalentTo(new List<int> { fixture.UserId, groupMember.Id, userToInvite.Id });
+        }
+
+        [Fact]
+        public async Task ShouldGetGroupMembers()
+        {
+            var group = new Group("TestGroup#2", fixture.UserId);
+            group.GroupMembers.Add(new GroupMember { UserId = fixture.UserId });
+            var member = fixture.OrganizationOwnerMembers[fixture.UserId].First();
+            group.GroupMembers.Add(new GroupMember { UserId = member.Id });
+
+            await fixture.ExecuteDbContext(x => {
+                x.Groups.Add(group);
+                return x.SaveChangesAsync();
+            });
+
+            var groupId = group.Id;
+            var response = await fixture.client.GetAsync($"groups/{groupId}/members");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var responseJson = await response.Content.ReadAsStringAsync();
+            var members = fixture.Deserialize<List<UserDto>>(responseJson);
+            var mapper = new OrganizationServiceMapper();
+            var memberDtos = new List<AppUser> { fixture.TestUser, member }.Select(mapper.MapToUserDto);
+
+            members.Should().BeEquivalentTo(memberDtos);
+        }
+
+        [Fact]
+        public async Task ShouldGetAvailableUsers()
+        {
+            var group = new Group("TestGroup#3", fixture.UserId);
+            group.GroupMembers.Add(new GroupMember { UserId = fixture.UserId });
+            var member = fixture.OrganizationOwnerMembers[fixture.UserId].First();
+            group.GroupMembers.Add(new GroupMember { UserId = member.Id });
+
+            await fixture.ExecuteDbContext(x => {
+                x.Groups.Add(group);
+                return x.SaveChangesAsync();
+            });
+
+            var groupId = group.Id;
+            var response = await fixture.client.GetAsync($"groups/{groupId}/available");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var responseJson = await response.Content.ReadAsStringAsync();
+            var members = fixture.Deserialize<List<UserDto>>(responseJson);
+            var mapper = new OrganizationServiceMapper();
+            var membersInOrganizationButNotInGroup = fixture.OrganizationOwnerMembers[fixture.UserId]
+                .Where(x=>x.Id != member.Id).Select(mapper.MapToUserDto);
+
+            members.Should().BeEquivalentTo(membersInOrganizationButNotInGroup);
         }
     }
 }
