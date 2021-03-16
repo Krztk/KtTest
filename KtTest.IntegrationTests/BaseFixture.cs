@@ -1,5 +1,6 @@
 ﻿using KtTest.Infrastructure.Data;
 using KtTest.IntegrationTests.Helpers;
+using KtTest.Models;
 using KtTest.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -32,6 +33,8 @@ namespace KtTest.IntegrationTests
         public List<Models.AppUser> OrganizationOwners { get; set; } = new List<Models.AppUser>();
         public Dictionary<int, List<Models.AppUser>> OrganizationOwnerMembers { get; set; } = new Dictionary<int, List<Models.AppUser>>();
         public Models.AppUser TestUser;
+        public List<Question> Questions { get; set; } = new List<Question>();
+        public TestTemplate TestTemplate { get; set; }
 
         public BaseFixture()
         {
@@ -92,7 +95,7 @@ namespace KtTest.IntegrationTests
 
         private async Task AddOrganizationOwners()
         {
-            for (int i = 1; i<=4; i++)
+            for (int i = 1; i <= 4; i++)
                 OrganizationOwners.Add(new Models.AppUser { UserName = $"Owner{i}", IsTeacher = true, InvitedBy = null });
 
             foreach (var owner in OrganizationOwners)
@@ -122,8 +125,51 @@ namespace KtTest.IntegrationTests
 
             foreach (var member in OrganizationOwnerMembers.Values.SelectMany(x => x))
             {
-                await AddUser(member);;
+                await AddUser(member);
             }
+        }
+
+        private Task AddQuestions()
+        {
+            var choices = new List<Choice>
+            {
+                new Choice { Content = "32", Valid = false},
+                new Choice { Content = "64", Valid = true},
+                new Choice { Content = "81", Valid = false},
+
+            };
+            var answer = new ChoiceAnswer(choices, ChoiceAnswerType.SingleChoice, 2f);
+            var question = new Question("What is the total number of squares on a chess board?", answer, UserId);
+            Questions.Add(question);
+
+            choices = new List<Choice>
+            {
+                new Choice { Content = "2", Valid = true},
+                new Choice { Content = "3", Valid = true},
+                new Choice { Content = "4", Valid = false},
+                new Choice { Content = "5", Valid = true},
+            };
+            answer = new ChoiceAnswer(choices, ChoiceAnswerType.MultipleChoice, 3f);
+            question = new Question("Select prime numbers", answer, UserId);
+            Questions.Add(question);
+
+            question = new Question("5 + 5 = ?", new WrittenAnswer("10", 1f), UserId);
+            Questions.Add(question);
+
+            return ExecuteDbContext(db =>
+            {
+                db.Questions.AddRange(Questions);
+                return db.SaveChangesAsync();
+            });
+        }
+        private Task AddTestTemplate()
+        {
+            TestTemplate = new TestTemplate("TestTemplate#1", UserId, Questions.Select(x => x.Id));
+            return ExecuteDbContext(db =>
+            {
+                db.TestTemplates.Add(TestTemplate);
+                return db.SaveChangesAsync();
+            });
         }
 
         public async Task InitializeAsync()
@@ -133,6 +179,8 @@ namespace KtTest.IntegrationTests
             await AddOrganizationMembers();
             TestUser = OrganizationOwners[0];
             UserId = TestUser.Id;
+            await AddQuestions();
+            await AddTestTemplate();
             var token = String.Empty;
             using (var scope = scopeFactory.CreateScope())
             {
