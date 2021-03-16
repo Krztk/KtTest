@@ -13,7 +13,7 @@ namespace KtTest.Dtos.Test
 
     public class UserTestResultDto
     {
-        public int Id { get; set; }
+        public int UserId { get; set; }
         public string Username { get; set; }
         public float? UserScore { get; set; }
         public string Status { get; set; }

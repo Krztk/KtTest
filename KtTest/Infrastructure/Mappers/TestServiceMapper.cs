@@ -103,7 +103,7 @@ namespace KtTest.Infrastructure.Mappers
         {
             return new UserTestResultDto
             {
-                Id = result.UserId,
+                UserId = result.UserId,
                 UserScore = result.UserScore,
                 Username = result.Username,
                 Status = result.Status.ToString(),
