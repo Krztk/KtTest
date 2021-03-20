@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace KtTest.Dtos.Test
 {
@@ -11,7 +8,7 @@ namespace KtTest.Dtos.Test
         public List<QuestionWithResultDto> QuestionsWithResult { get; set; }
     }
 
-    public class QuestionWithResultDto
+    public abstract class QuestionWithResultDto
     {
         public int QuestionId { get; set; }
         public string Question { get; set; }
