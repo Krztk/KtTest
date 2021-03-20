@@ -4,12 +4,9 @@ using KtTest.Dtos.Organizations;
 using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -34,7 +31,7 @@ namespace KtTest.IntegrationTests
             };
 
             var json = fixture.Serialize(dto);
-            var response = await fixture.client.PostAsync("groups", new StringContent(json, Encoding.UTF8, "application/json"));
+            var response = await fixture.RequestSender.PostAsync("groups", json);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var responseData = await response.Content.ReadAsStringAsync();
             int groupId;
@@ -64,7 +61,7 @@ namespace KtTest.IntegrationTests
 
             var json = fixture.Serialize(dto);
             int groupId = group.Id;
-            var response = await fixture.client.PostAsync($"groups/{groupId}/members", new StringContent(json, Encoding.UTF8, "application/json"));
+            var response = await fixture.RequestSender.PostAsync($"groups/{groupId}/members", json);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var groupFromDb = await fixture.ExecuteDbContext(x => x.Groups.Include(x => x.GroupMembers).FirstOrDefaultAsync(x => x.Id == groupId));
@@ -86,7 +83,7 @@ namespace KtTest.IntegrationTests
             });
 
             var groupId = group.Id;
-            var response = await fixture.client.GetAsync($"groups/{groupId}/members");
+            var response = await fixture.RequestSender.GetAsync($"groups/{groupId}/members");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var responseJson = await response.Content.ReadAsStringAsync();
             var members = fixture.Deserialize<List<UserDto>>(responseJson);
@@ -110,7 +107,7 @@ namespace KtTest.IntegrationTests
             });
 
             var groupId = group.Id;
-            var response = await fixture.client.GetAsync($"groups/{groupId}/available");
+            var response = await fixture.RequestSender.GetAsync($"groups/{groupId}/available");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var responseJson = await response.Content.ReadAsStringAsync();
             var members = fixture.Deserialize<List<UserDto>>(responseJson);

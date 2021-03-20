@@ -5,8 +5,6 @@ using KtTest.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -27,7 +25,7 @@ namespace KtTest.IntegrationTests
         {
             var dto = new CreateCategoryDto { Name = "Math" };
             var json = fixture.Serialize(dto);
-            var response = await fixture.client.PostAsync("categories", new StringContent(json, Encoding.UTF8, "application/json"));
+            var response = await fixture.RequestSender.PostAsync("categories", json);
             var responseJson = await response.Content.ReadAsStringAsync();
 
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -57,7 +55,7 @@ namespace KtTest.IntegrationTests
             var mapper = new CategoryServiceMapper();
             var categoryDtos = categories.Select(mapper.MapToCategoryDto).ToArray();
 
-            var response = await fixture.client.GetAsync("categories");
+            var response = await fixture.RequestSender.GetAsync("categories");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var responseJson = await response.Content.ReadAsStringAsync();
             var returnedCategories = fixture.Deserialize<CategoryDto[]>(responseJson);

@@ -7,8 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -28,7 +26,7 @@ namespace KtTest.IntegrationTests
         public async Task ShouldGetOrganizationMembers()
         {
             var organizationOwner = fixture.UserId;
-            var response = await fixture.client.GetAsync("organizations/members");
+            var response = await fixture.RequestSender.GetAsync("organizations/members");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var responseJson = await response.Content.ReadAsStringAsync();
             var members = fixture.Deserialize<List<UserDto>>(responseJson);
@@ -50,7 +48,7 @@ namespace KtTest.IntegrationTests
             };
 
             var json = fixture.Serialize(dto);
-            var response = await fixture.client.PostAsync($"organizations/invite", new StringContent(json, Encoding.UTF8, "application/json"));
+            var response = await fixture.RequestSender.PostAsync($"organizations/invite", json);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var invitation = await fixture.ExecuteDbContext(db => db.Invitations.Where(x => x.Email == email).FirstOrDefaultAsync());
@@ -90,7 +88,7 @@ namespace KtTest.IntegrationTests
             var mapper = new OrganizationServiceMapper();
             var expectedDtos = invitations.Select(mapper.MapToInvitationDto);
 
-            var response = await fixture.client.GetAsync("organizations/invitations");
+            var response = await fixture.RequestSender.GetAsync("organizations/invitations");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var responseJson = await response.Content.ReadAsStringAsync();
             var retunedInvitationDtos = fixture.Deserialize<InvitationDto[]>(responseJson);

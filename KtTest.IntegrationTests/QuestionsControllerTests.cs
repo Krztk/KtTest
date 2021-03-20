@@ -35,7 +35,7 @@ namespace KtTest.IntegrationTests
             };
  
             var json = fixture.Serialize(questionDto);
-            var response = await fixture.client.PostAsync($"questions", new StringContent(json, Encoding.UTF8, "application/json"));
+            var response = await fixture.RequestSender.PostAsync($"questions", json);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var responseData = await response.Content.ReadAsStringAsync();
             int questionId;
@@ -58,7 +58,7 @@ namespace KtTest.IntegrationTests
             };
 
             var json = fixture.Serialize(questionDtoWithEmptyAnswerField);
-            var response = await fixture.client.PostAsync($"questions", new StringContent(json, Encoding.UTF8, "application/json"));
+            var response = await fixture.RequestSender.PostAsync($"questions", json);
             var responseJson = await response.Content.ReadAsStringAsync();
 
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -112,7 +112,7 @@ namespace KtTest.IntegrationTests
             int offset = 0;
             int limit = 10;
             var queryString = $"?Offset={offset}&Limit={limit}";
-            var response = await fixture.client.GetAsync("questions" + queryString);
+            var response = await fixture.RequestSender.GetAsync("questions" + queryString);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var responseData = await response.Content.ReadAsStringAsync();
             var result = fixture.Deserialize<Paginated<QuestionDto>>(responseData);
