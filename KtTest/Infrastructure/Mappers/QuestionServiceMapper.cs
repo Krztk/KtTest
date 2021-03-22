@@ -142,7 +142,10 @@ namespace KtTest.Infrastructure.Mappers
                     .Select(x => new Choice { Content = x.Content, Valid = x.Valid })
                     .ToList();
 
-                answer = new ChoiceAnswer(choices, choiceAnswer.ChoiceAnswerType, choiceAnswer.Score);
+                answer = new ChoiceAnswer(choices,
+                                          choiceAnswer.ChoiceAnswerType,
+                                          choiceAnswer.Score,
+                                          choiceAnswer.AllValidChoicesRequired);
             }
             else if (dto is Dtos.Wizard.QuestionWithWrittenAnswerDto writtenAnswer)
             {
