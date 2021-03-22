@@ -7,7 +7,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace KtTest.IntegrationTests
+namespace KtTest.IntegrationTests.Tests
 {
     [Collection(nameof(BaseFixture))]
     public class TestsControllerTests : IClassFixture<TestsControllerFixture>
