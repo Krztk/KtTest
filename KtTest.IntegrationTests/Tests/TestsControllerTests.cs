@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using KtTest.Dtos.Test;
+using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,7 +59,7 @@ namespace KtTest.IntegrationTests.Tests
         }
 
         [Fact]
-        public async Task StudentShouldGetTheyResult()
+        public async Task StudentShouldGetTheirResult()
         {
             var scheduledTest = controllerFixture.ScheduledTest;
             var testTemplate = controllerFixture.TestTemplate;
@@ -118,6 +119,22 @@ namespace KtTest.IntegrationTests.Tests
             var responseData = await response.Content.ReadAsStringAsync();
             var result = fixture.Deserialize<TestResultsDto>(responseData);
             result.Should().BeEquivalentTo(expectedDto);
+        }
+
+        [Fact]
+        public async Task StudentShouldGetTheirAnswers()
+        {
+            int testId = controllerFixture.ScheduledTest.Id;
+            var student = fixture.OrganizationOwnerMembers[fixture.UserId].First();
+            var answers = controllerFixture.UserAnswers.Where(x => x.UserId == student.Id);
+            var mapper = new QuestionServiceMapper();
+            var expectedAnswerDtos = answers.Select(mapper.MapToTestQuestionAnswerDto);
+            var token = fixture.GenerateToken(student);
+            var response = await fixture.RequestSender.GetAsync($"tests/{testId}/answers", token);
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var responseData = await response.Content.ReadAsStringAsync();
+            var result = fixture.Deserialize<List<QuestionAnswerDto>>(responseData);
+            result.Should().BeEquivalentTo(expectedAnswerDtos);
         }
     }
 }

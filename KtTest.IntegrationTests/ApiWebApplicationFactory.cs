@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using KtTest.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace KtTest.IntegrationTests
 {
@@ -15,6 +18,11 @@ namespace KtTest.IntegrationTests
                     .Build();
 
                 config.AddConfiguration(integrationConfig);
+            });
+
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddScoped<IDateTimeProvider, IntegrationTestsDateTimeProvider>();
             });
         }
     }
