@@ -18,6 +18,11 @@ namespace KtTest.Models
             MaxScore = maxScore;
         }
 
+        public WrittenAnswer(int questionId, string value, float maxScore) : this(value, maxScore)
+        {
+            QuestionId = questionId;
+        }
+
         public override float GetScore(UserAnswer userAnswer)
         {
             var writtenAnswer = userAnswer as WrittenUserAnswer;

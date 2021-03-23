@@ -3,7 +3,6 @@ using KtTest.Infrastructure.Data;
 using KtTest.Models;
 using KtTest.Results;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -39,11 +38,11 @@ namespace KtTest.Services
             if (question == null)
                 throw new ValueNotInTheCacheException("the question should already be in cache.");
 
-            question.Content = content;
+            question.UpdateContent(content);
             if (categoryIds != null)
                 question.ReplaceCategories(categoryIds);
 
-            question.Answer = answer;
+            question.UpdateAnswer(answer);
             await dbContext.SaveChangesAsync();
             return new OperationResult();
         }

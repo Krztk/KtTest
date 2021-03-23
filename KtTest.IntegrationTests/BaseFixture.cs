@@ -95,7 +95,12 @@ namespace KtTest.IntegrationTests
         private async Task AddOrganizationOwners()
         {
             for (int i = 1; i <= 4; i++)
-                OrganizationOwners.Add(new Models.AppUser { UserName = $"Owner{i}", IsTeacher = true, InvitedBy = null });
+            {
+                var username = $"Owner{i}";
+                var email = username + "@example.com";
+                var owner = AppUser.CreateOrganizationOwner(email, username);
+                OrganizationOwners.Add(owner);
+            }
 
             foreach (var owner in OrganizationOwners)
             {
@@ -112,13 +117,15 @@ namespace KtTest.IntegrationTests
 
                 for (int i = 1; i <= 3; i++)
                 {
-                    var member = new Models.AppUser { UserName = $"user{i}_invitedby_{owner.Id}", IsTeacher = false, InvitedBy = owner.Id };
+                    var username = $"user{i}_invitedby_{owner.Id}";
+                    var email = username + "@example.com";
+                    var member = AppUser.CreateOrganizationMember(email, username, false, owner.Id);
                     if (OrganizationOwnerMembers.ContainsKey(owner.Id))
                     {
                         OrganizationOwnerMembers[owner.Id].Add(member);
                     }
                     else
-                        OrganizationOwnerMembers.Add(owner.Id, new List<Models.AppUser> { member });
+                        OrganizationOwnerMembers.Add(owner.Id, new List<AppUser> { member });
                 }
             }
 

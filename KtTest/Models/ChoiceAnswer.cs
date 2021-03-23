@@ -16,7 +16,10 @@ namespace KtTest.Models
 
         }
 
-        public ChoiceAnswer(List<Choice> choices, ChoiceAnswerType choiceAnswerType, float maxScore, bool allValidChoicesRequired = true)
+        public ChoiceAnswer(List<Choice> choices,
+                            ChoiceAnswerType choiceAnswerType,
+                            float maxScore,
+                            bool allValidChoicesRequired = true)
         {
             if (choices == null)
                 throw new ArgumentNullException();
@@ -26,6 +29,16 @@ namespace KtTest.Models
             NumericValue = GetNumericValueFromChoices(choices);
             MaxScore = maxScore;
             AllValidChoicesRequired = allValidChoicesRequired;
+        }
+
+        public ChoiceAnswer(int questionId,
+                            List<Choice> choices,
+                            ChoiceAnswerType choiceAnswerType, 
+                            float maxScore,
+                            bool allValidChoicesRequired = true)
+                            : this(choices, choiceAnswerType, maxScore, allValidChoicesRequired)
+        {
+            QuestionId = questionId;
         }
 
         public override float GetScore(UserAnswer userAnswer)

@@ -113,14 +113,11 @@ namespace KtTest.Services
             }
 
             var testResults = userIdTestAnswer.Select(x => x.Value.GetTestResult()).ToList();
-            var groupResults = new GroupResults
-            {
-                Ended = testEndedResult.Data,
-                MaxTestScore = maxTestScore,
-                ScheduledTestId = scheduledTest.Id,
-                TestName = scheduledTest.TestTemplate.Name,
-                Results = testResults
-            };
+            var groupResults = new GroupResults(scheduledTest.Id,
+                                                scheduledTest.TestTemplate.Name,
+                                                maxTestScore,
+                                                testResults,
+                                                testEndedResult.Data);
 
             return groupResults;
         }

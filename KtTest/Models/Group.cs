@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace KtTest.Models
 {
@@ -10,11 +7,16 @@ namespace KtTest.Models
         public int Id { get; private set; }
         public string Name { get; private set; }
         public ICollection<GroupMember> GroupMembers { get; private set; } = new List<GroupMember>();
-        public int OwnerId { get; set; }
+        public int OwnerId { get; private set; }
         public Group(string name, int ownerId)
         {
             Name = name;
             OwnerId = ownerId;
+        }
+
+        public Group(int id, string name, int ownerId) : this(name, ownerId)
+        {
+            Id = id;
         }
 
         private Group()

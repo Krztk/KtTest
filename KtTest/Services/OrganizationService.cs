@@ -27,14 +27,11 @@ namespace KtTest.Services
         public async Task<OperationResult> CreateRegistrationInvitation(string email, bool isTeacher)
         {
             var code = codeGenerator.GenerateCode();
-            var invitation = new Invitation
-            {
-                Code = code,
-                Email = email,
-                IsTeacher = isTeacher,
-                InvitedBy = userContext.UserId,
-                Date = dateTimeProvider.UtcNow
-            };
+            var invitation = new Invitation(email,
+                                            isTeacher,
+                                            code,
+                                            userContext.UserId,
+                                            dateTimeProvider.UtcNow);
 
             dbContext.Invitations.Add(invitation);
             await dbContext.SaveChangesAsync();

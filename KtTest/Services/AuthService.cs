@@ -49,7 +49,7 @@ namespace KtTest.Services
 
         public async Task<OperationResult> RegisterOrganizationOwner(string email, string username, string password)
         {
-            var user = new AppUser { UserName = username, Email = email, IsTeacher = true };
+            var user = AppUser.CreateOrganizationOwner(username, email);
             return await CreateUser(password, user);
         }
 
@@ -62,14 +62,7 @@ namespace KtTest.Services
                 return new BadRequestError();
             }
 
-            var user = new AppUser
-            {
-                UserName = username,
-                Email = email,
-                InvitedBy = invitation.InvitedBy,
-                IsTeacher = invitation.IsTeacher
-            };
-
+            var user = AppUser.CreateOrganizationMember(email, username, invitation.IsTeacher, invitation.InvitedBy);
             result = await CreateUser(password, user);
             if (result.Succeeded)
             {

@@ -23,8 +23,10 @@ namespace KtTest.Tests.ModelTests
             userTest.SetEndDate(utcNow.AddMinutes(-40));
             var testAnswers = new TestAnswers(scheduledTest, userTest, "UserName", dateTimeProdiver.Object);
             float maxScore = 3f;
-            testAnswers.AddAnswerPair(new WrittenUserAnswer("value", 0, 1, userId), new WrittenAnswer("value", maxScore) { QuestionId = 1 });
-            testAnswers.AddAnswerPair(new WrittenUserAnswer("value2", 0, 2, userId), new WrittenAnswer("value2", maxScore) { QuestionId = 2 });
+            int questionId = 1;
+            testAnswers.AddAnswerPair(new WrittenUserAnswer("value", 0, questionId, userId), new WrittenAnswer(questionId, "value", maxScore));
+            questionId = 2;
+            testAnswers.AddAnswerPair(new WrittenUserAnswer("value2", 0, questionId, userId), new WrittenAnswer(questionId, "value2", maxScore));
             var expectedUserTestResult = new UserTestResult("UserName", 6f, userId, TestStatus.Completed);
 
             //act

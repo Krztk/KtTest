@@ -15,10 +15,9 @@ namespace KtTest.Tests.MapperTests
         {
             float score = 2f;
             int authorId = 1;
-
-            questionWithWrittenAnswer = new Question("QuestionContent",
+            int questionId = 5;
+            questionWithWrittenAnswer = new Question(questionId, "QuestionContent",
                 new WrittenAnswer("Answer Content", score), authorId);
-            questionWithWrittenAnswer.Id = 5;
         }
 
         [Fact]
@@ -281,8 +280,7 @@ namespace KtTest.Tests.MapperTests
             var authorId = 1;
             var score = 1f;
             var answer = new ChoiceAnswer(choices, choiceAnswerType, score, allRequired);
-            var question = new Question("Question content", answer, authorId);
-            question.Id = questionId;
+            var question = new Question(questionId, "Question content", answer, authorId);
             return question;
         }
 

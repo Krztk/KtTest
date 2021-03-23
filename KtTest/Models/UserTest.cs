@@ -4,9 +4,9 @@ namespace KtTest.Models
 {
     public class UserTest
     {
-        public int UserId { get; set; }
-        public ScheduledTest ScheduledTest { get; set; }
-        public int ScheduledTestId { get; set; }
+        public int UserId { get; private set; }
+        public ScheduledTest ScheduledTest { get; private set; }
+        public int ScheduledTestId { get; private set; }
         public DateTime? StartDate { get; private set; }
         public DateTime? EndDate { get; private set; }
 

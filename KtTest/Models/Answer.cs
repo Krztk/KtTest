@@ -2,9 +2,9 @@
 {
     public abstract class Answer
     {
-        public int Id { get; set; }
-        public int QuestionId { get; set; }
-        public float MaxScore { get; set; }
+        public int Id { get; protected set; }
+        public int QuestionId { get; protected set; }
+        public float MaxScore { get; protected set; }
         public abstract float GetScore(UserAnswer userAnswer);
     }
 }

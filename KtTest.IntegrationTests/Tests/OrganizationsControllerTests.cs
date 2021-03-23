@@ -61,22 +61,16 @@ namespace KtTest.IntegrationTests.Tests
         {
             var invitations = new List<Invitation>
             {
-                new Invitation
-                {
-                    Code = Guid.NewGuid().ToString(),
-                    Date = new DateTime(2021, 3, 3, 14, 0, 5, DateTimeKind.Utc),
-                    Email = "testEmail1@example.com",
-                    IsTeacher = false,
-                    InvitedBy = fixture.UserId   
-                },
-                new Invitation
-                {
-                    Code = Guid.NewGuid().ToString(),
-                    Date = new DateTime(2021, 3, 3, 15, 25, 3, DateTimeKind.Utc),
-                    Email = "testEmail2@example.com",
-                    IsTeacher = true,
-                    InvitedBy = fixture.UserId
-                },
+                new Invitation("testEmail1@example.com",
+                                false,
+                                Guid.NewGuid().ToString(),
+                                fixture.UserId,
+                                new DateTime(2021, 3, 3, 14, 0, 5, DateTimeKind.Utc)),
+                new Invitation("testEmail2@example.com",
+                                true,
+                                Guid.NewGuid().ToString(),
+                                fixture.UserId,
+                                new DateTime(2021, 3, 3, 15, 25, 3, DateTimeKind.Utc))
             };
             
             await fixture.ExecuteDbContext(db =>

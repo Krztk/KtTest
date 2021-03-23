@@ -17,15 +17,6 @@ namespace KtTest.Infrastructure.Mappers
             this.dateTimeProvider = dateTimeProvider;
         }
 
-        public Dtos.Test.TestDto MapToTestDto(TestTemplate test)
-        {
-            return new Dtos.Test.TestDto
-            {
-                Name = test.Name,
-                Questions = test.TestItems.Select(x => questionMapper.MapToTestQuestionDto(x.Question)).ToList()
-            };
-        }
-
         public Dtos.Test.TestHeaderDto MapToTestHeaderDto(ScheduledTest x)
         {
             return new Dtos.Test.TestHeaderDto

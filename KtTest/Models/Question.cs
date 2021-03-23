@@ -5,12 +5,12 @@ namespace KtTest.Models
 {
     public class Question
     {
-        public int Id { get; set; }
-        public string Content { get; set; }
-        public Answer Answer { get; set; }
-        public ICollection<TestTemplateItem> TestItems { get; set; } = new List<TestTemplateItem>();
-        public ICollection<QuestionCategory> QuestionCategories { get; set; } = new List<QuestionCategory>();
-        public int AuthorId { get; set; }
+        public int Id { get; private set; }
+        public string Content { get; private set; }
+        public Answer Answer { get; private set; }
+        public ICollection<TestTemplateItem> TestItems { get; private set; } = new List<TestTemplateItem>();
+        public ICollection<QuestionCategory> QuestionCategories { get; private set; } = new List<QuestionCategory>();
+        public int AuthorId { get; private set; }
 
         private Question()
         {
@@ -24,6 +24,11 @@ namespace KtTest.Models
             AuthorId = authorId;
         }
 
+        public Question(int id, string content, Answer answer, int authorId) : this(content, answer, authorId)
+        {
+            Id = id;
+        }
+
         public void ReplaceCategories(IEnumerable<int> categoryIds)
         {
             QuestionCategories.Clear();
@@ -31,6 +36,16 @@ namespace KtTest.Models
             {
                 QuestionCategories.Add(new QuestionCategory { CategoryId = categoryId });
             }
+        }
+
+        public void UpdateContent(string content)
+        {
+            Content = content;
+        }
+
+        public void UpdateAnswer(Answer answer)
+        {
+            Answer = answer;
         }
     }
 }
