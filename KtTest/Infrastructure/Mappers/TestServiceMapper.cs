@@ -8,42 +8,42 @@ namespace KtTest.Infrastructure.Mappers
 {
     public class TestServiceMapper
     {
-        private readonly QuestionServiceMapper questionMapper;
+        private readonly IQuestionServiceMapper questionMapper;
         private readonly IDateTimeProvider dateTimeProvider;
 
-        public TestServiceMapper(QuestionServiceMapper questionMapper, IDateTimeProvider dateTimeProvider)
+        public TestServiceMapper(IQuestionServiceMapper questionMapper, IDateTimeProvider dateTimeProvider)
         {
             this.questionMapper = questionMapper;
             this.dateTimeProvider = dateTimeProvider;
         }
 
-        public Dtos.Test.TestHeaderDto MapToTestHeaderDto(ScheduledTest x)
+        public Dtos.Test.TestHeaderDto MapToTestHeaderDto(ScheduledTest scheduledTest)
         {
             return new Dtos.Test.TestHeaderDto
             {
-                Id = x.Id,
-                Name = x.TestTemplate.Name,
-                StartsAt = x.StartDate,
-                EndsAt = x.EndDate
+                Id = scheduledTest.Id,
+                Name = scheduledTest.TestTemplate.Name,
+                StartsAt = scheduledTest.StartDate,
+                EndsAt = scheduledTest.EndDate
             };
         }
 
-        public Dtos.Wizard.TestTemplateHeaderDto MapToTestWizardHeaderDto(TestTemplate test)
+        public Dtos.Wizard.TestTemplateHeaderDto MapToTestWizardHeaderDto(TestTemplate testTemplate)
         {
             return new Dtos.Wizard.TestTemplateHeaderDto
             {
-                Id = test.Id,
-                Name = test.Name,
-                NumberOfQuestions = test.TestItems.Count
+                Id = testTemplate.Id,
+                Name = testTemplate.Name,
+                NumberOfQuestions = testTemplate.TestItems.Count
             };
         }
 
-        public Dtos.Wizard.TestTemplateDto MapToTestWizardDto(TestTemplate test)
+        public Dtos.Wizard.TestTemplateDto MapToTestWizardDto(TestTemplate testTemplate)
         {
             return new Dtos.Wizard.TestTemplateDto
             {
-                Name = test.Name,
-                Questions = test.TestItems
+                Name = testTemplate.Name,
+                Questions = testTemplate.TestItems
                     .Select(test => questionMapper.MapToWizardQuestionDto(test.Question))
                     .ToList()
             };

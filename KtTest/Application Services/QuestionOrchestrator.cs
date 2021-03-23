@@ -14,14 +14,14 @@ namespace KtTest.Application_Services
         private readonly QuestionService questionService;
         private readonly CategoryService categoryService;
         private readonly TestService testService;
-        private readonly QuestionServiceMapper questionMapper;
+        private readonly IQuestionServiceMapper questionMapper;
         private readonly QuestionReader questionReader;
         private readonly IUserContext userContext;
 
         public QuestionOrchestrator(QuestionService questionService,
             CategoryService categoryService,
             TestService testService,
-            QuestionServiceMapper questionMapper,
+            IQuestionServiceMapper questionMapper,
             QuestionReader questionReader,
             IUserContext userContext)
         {

@@ -1,8 +1,5 @@
-﻿using KtTest.Services;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace KtTest.Models
 {
@@ -18,6 +15,12 @@ namespace KtTest.Models
 
         }
 
+        public TestTemplate(int id, string name, int authorId, IEnumerable<int> questionIds)
+            : this(name, authorId, questionIds)
+        {
+            Id = id;
+        }
+
         public TestTemplate(string name, int authorId, IEnumerable<int> questionIds)
         {
             Name = name;
@@ -25,7 +28,7 @@ namespace KtTest.Models
 
             foreach (var questionId in questionIds)
             {
-                var testItem = new TestTemplateItem { QuestionId = questionId };
+                var testItem = new TestTemplateItem(questionId);
                 TestItems.Add(testItem);
             }
 

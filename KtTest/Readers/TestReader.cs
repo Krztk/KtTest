@@ -15,11 +15,11 @@ namespace KtTest.Readers
     public class TestReader
     {
         private readonly ReadOnlyAppDbContext dbContext;
-        private readonly QuestionServiceMapper questionMapper;
+        private readonly IQuestionServiceMapper questionMapper;
         private readonly TestServiceMapper testMapper;
         private readonly IDateTimeProvider dateTimeProvider;
 
-        public TestReader(ReadOnlyAppDbContext dbContext, QuestionServiceMapper questionMapper, TestServiceMapper testMapper, IDateTimeProvider dateTimeProvider)
+        public TestReader(ReadOnlyAppDbContext dbContext, IQuestionServiceMapper questionMapper, TestServiceMapper testMapper, IDateTimeProvider dateTimeProvider)
         {
             this.dbContext = dbContext;
             this.questionMapper = questionMapper;

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace KtTest.Infrastructure.Mappers
 {
-    public class QuestionServiceMapper
+    public class QuestionServiceMapper : IQuestionServiceMapper
     {
         public Dtos.Test.QuestionDto MapToTestQuestionDto(Question question)
         {

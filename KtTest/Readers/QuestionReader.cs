@@ -14,9 +14,9 @@ namespace KtTest.Readers
     public class QuestionReader
     {
         private readonly ReadOnlyAppDbContext dbContext;
-        private readonly QuestionServiceMapper questionMapper;
+        private readonly IQuestionServiceMapper questionMapper;
 
-        public QuestionReader(ReadOnlyAppDbContext dbContext, QuestionServiceMapper questionMapper)
+        public QuestionReader(ReadOnlyAppDbContext dbContext, IQuestionServiceMapper questionMapper)
         {
             this.dbContext = dbContext;
             this.questionMapper = questionMapper;
