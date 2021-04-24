@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using KtTest.Models;
 using KtTest.Services;
+using KtTest.Tests.TestDataBuilders;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -12,11 +13,19 @@ namespace KtTest.Tests.ServiceTests
 {
     public class TestServiceTests : TestWithSqlite
     {
+        private readonly int userId = 3;
+        IUserContext userContext;
+        public TestServiceTests()
+        {
+            var userContextMock = new Mock<IUserContext>();
+            userContextMock.Setup(x => x.UserId).Returns(userId);
+            userContext = userContextMock.Object;
+        }
+
         [Fact]
         public async Task CreateTest_ValidData_ReturnsSuccessResultWithId()
         {
             //arrange
-            var userId = 11;
             float maxScore = 3f;
             var questionsInDb = new List<Question>
             {
@@ -27,11 +36,9 @@ namespace KtTest.Tests.ServiceTests
             dbContext.Questions.AddRange(questionsInDb);
             dbContext.SaveChanges();
             questionsInDb.ForEach(x => x.Id.Should().NotBe(0));
-            var userContextMock = new Mock<IUserContext>();
-            userContextMock.Setup(x => x.UserId).Returns(userId);
             var dateTimeProdiver = new Mock<IDateTimeProvider>();
             dateTimeProdiver.Setup(x => x.UtcNow).Returns(new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc));
-            var service = new TestService(dbContext, userContextMock.Object, dateTimeProdiver.Object);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
             var testName = "My first test";
             var questionIds = questionsInDb.Take(2).Select(x => x.Id).ToList();
 
@@ -48,24 +55,26 @@ namespace KtTest.Tests.ServiceTests
         }
 
         [Fact]
-        public async Task HasTestComeToEnd_NoUserHasStartedTest_ReturnsSuccessResultWithFalse()
+        public async Task HasTestComeToEnd_NoUserHasStartedAvailableTest_ReturnsSuccessResultWithFalse()
         {
             //arrange
+            var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
             var dateTimeProdiver = new Mock<IDateTimeProvider>();
-            dateTimeProdiver.Setup(x => x.UtcNow).Returns(new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc));
-            int userId = 3;
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
             int testAuthorId = 1;
-            var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
-            ScheduledTest test = PrepareTestForUsers(dateTimeProdiver.Object, testAuthorId, usersTakingTest, SeedQuestions(testAuthorId));
-            dbContext.Add(test);
-            dbContext.SaveChanges();
-            var testId = test.Id;
-            var userContextMock = new Mock<IUserContext>();
-            userContextMock.Setup(x => x.UserId).Returns(userId);
-            var service = new TestService(dbContext, userContextMock.Object, dateTimeProdiver.Object);
+            var questionIds = SeedQuestions(testAuthorId);
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow)
+                .SetAsCurrentlyAvailable()
+                .IncludeUser(userId)
+                .Build();
+            InsertData(scheduledTest);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
 
             //act
-            var result = await service.HasTestComeToEnd(testId);
+            var result = await service.HasTestComeToEnd(scheduledTest.Id);
 
             //assert
             result.Succeeded.Should().BeTrue();
@@ -76,21 +85,19 @@ namespace KtTest.Tests.ServiceTests
         public void DoesTestContainQuestions_ContainsEveryQuestionFromTest_ReturnsTrue()
         {
             //arrange
+            var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
             var dateTimeProdiver = new Mock<IDateTimeProvider>();
-            dateTimeProdiver.Setup(x => x.UtcNow).Returns(new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc));
-            int userId = 3;
-            var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
             int testAuthorId = 1;
             var questionIds = SeedQuestions(testAuthorId);
-            ScheduledTest test = PrepareTestForUsers(dateTimeProdiver.Object, testAuthorId, usersTakingTest, questionIds);
-            dbContext.Add(test);
-            dbContext.SaveChanges();
-            var testId = test.Id;
-            var userContextMock = new Mock<IUserContext>();
-            userContextMock.Setup(x => x.UserId).Returns(userId);
-            var service = new TestService(dbContext, userContextMock.Object, dateTimeProdiver.Object);
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow).Build();
+            InsertData(scheduledTest);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
+
             //act
-            var doesContainEveryQuestion = service.DoesTestContainQuestions(questionIds, test.Id);
+            var doesContainEveryQuestion = service.DoesTestContainQuestions(questionIds, scheduledTest.Id);
 
             //assert
             doesContainEveryQuestion.Should().BeTrue();
@@ -100,23 +107,20 @@ namespace KtTest.Tests.ServiceTests
         public void DoesTestContainQuestions_DoesntContainEveryQuestion_ReturnsFalse()
         {
             //arrange
+            var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
             var dateTimeProdiver = new Mock<IDateTimeProvider>();
-            dateTimeProdiver.Setup(x => x.UtcNow).Returns(new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc));
-            int userId = 3;
-            var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
             int testAuthorId = 1;
-            List<int> questionIds = SeedQuestions(testAuthorId);
-            var notValidQuestionIdsCollection = new List<int>(questionIds) { 20, 21 };
-            ScheduledTest test = PrepareTestForUsers(dateTimeProdiver.Object, testAuthorId, usersTakingTest, questionIds);
-            dbContext.Add(test);
-            dbContext.SaveChanges();
-            var testId = test.Id;
-            var userContextMock = new Mock<IUserContext>();
-            userContextMock.Setup(x => x.UserId).Returns(userId);
-            var service = new TestService(dbContext, userContextMock.Object, dateTimeProdiver.Object);
+            var questionIds = SeedQuestions(testAuthorId);
+            var notEquivalentListOfQuestionIds = new List<int>(questionIds) { 20, 21 };
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow).Build();
+            InsertData(scheduledTest);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
 
             //act
-            var doesContainEveryQuestion = service.DoesTestContainQuestions(notValidQuestionIdsCollection, test.Id);
+            var doesContainEveryQuestion = service.DoesTestContainQuestions(notEquivalentListOfQuestionIds, scheduledTest.Id);
 
             //assert
             doesContainEveryQuestion.Should().BeFalse();
@@ -126,19 +130,18 @@ namespace KtTest.Tests.ServiceTests
         public async Task HasTestWithQuestionStarted_TestWithProvidedQuestionStarted_ReturnsTrue()
         {
             //arrange
+            var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
             var dateTimeProdiver = new Mock<IDateTimeProvider>();
-            dateTimeProdiver.Setup(x => x.UtcNow).Returns(new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc));
-            int userId = 3;
-            var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
             int testAuthorId = 1;
             List<int> questionIds = SeedQuestions(testAuthorId);
-            ScheduledTest test = PrepareTestForUsers(dateTimeProdiver.Object, testAuthorId, usersTakingTest, questionIds);
-            dbContext.Add(test);
-            dbContext.SaveChanges();
-            var testId = test.Id;
-            var userContextMock = new Mock<IUserContext>();
-            userContextMock.Setup(x => x.UserId).Returns(userId);
-            var service = new TestService(dbContext, userContextMock.Object, dateTimeProdiver.Object);
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow)
+                .SetAsCurrentlyAvailable()
+                .Build();
+            InsertData(scheduledTest);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
 
             //act
             var result = await service.HasTestWithQuestionStarted(questionIds.First());
@@ -151,19 +154,19 @@ namespace KtTest.Tests.ServiceTests
         public async Task HasTestWithQuestionStarted_TestWithProvidedQuestionHasntStarted_ReturnsFalse()
         {
             //arrange
+            var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
             var dateTimeProdiver = new Mock<IDateTimeProvider>();
-            dateTimeProdiver.Setup(x => x.UtcNow).Returns(new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc));
-            int userId = 3;
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
             var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
             int testAuthorId = 1;
             List<int> questionIds = SeedQuestions(testAuthorId);
-            ScheduledTest test = PrepareTestForUsers(dateTimeProdiver.Object, testAuthorId, usersTakingTest, questionIds, testStarted: false);
-            dbContext.Add(test);
-            dbContext.SaveChanges();
-            var testId = test.Id;
-            var userContextMock = new Mock<IUserContext>();
-            userContextMock.Setup(x => x.UserId).Returns(userId);
-            var service = new TestService(dbContext, userContextMock.Object, dateTimeProdiver.Object);
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow)
+                .SetAsUpcoming()
+                .Build();
+            InsertData(scheduledTest);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
 
             //act
             var result = await service.HasTestWithQuestionStarted(questionIds.First());
@@ -173,29 +176,27 @@ namespace KtTest.Tests.ServiceTests
         }
 
         [Fact]
-        public async Task CanGetTest_UserHasntStartedTestYetAndDateRangeIsValid_ReturnsResultsWithTrue()
+        public async Task CanGetTest_UserHasntStartedAvailableTestYet_ReturnsResultsWithTrue()
         {
             //arrange
             var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
-            DateTime publishDate = utcNow.AddDays(-1);
-            DateTime startDate = utcNow.AddMinutes(-20);
-            DateTime endDate = utcNow.AddMinutes(10);
             var dateTimeProdiver = new Mock<IDateTimeProvider>();
-            dateTimeProdiver.Setup(x => x.UtcNow).Returns(new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc));
-            int userId = 3;
-            var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
             int testAuthorId = 1;
             List<int> questionIds = SeedQuestions(testAuthorId);
-            ScheduledTest test = PrepareTestForUsers("test1", publishDate, startDate, endDate, testAuthorId, 20, usersTakingTest, questionIds);
-            dbContext.Add(test);
-            dbContext.SaveChanges();
-            var testId = test.Id;
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow)
+                .IncludeUser(userId)
+                .SetAsCurrentlyAvailable()
+                .Build();
+            InsertData(scheduledTest);
             var userContextMock = new Mock<IUserContext>();
             userContextMock.Setup(x => x.UserId).Returns(userId);
-            var service = new TestService(dbContext, userContextMock.Object, dateTimeProdiver.Object);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
 
             //act
-            var result = await service.CanGetTest(testId, userId);
+            var result = await service.CanGetTest(scheduledTest.Id, userId);
 
             //assert
             result.Succeeded.Should().BeTrue();
@@ -207,28 +208,24 @@ namespace KtTest.Tests.ServiceTests
         {
             //arrange
             var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
-            DateTime publishDate = utcNow.AddDays(-1);
-            DateTime startDate = utcNow.AddMinutes(-20);
-            DateTime endDate = utcNow.AddMinutes(10);
             var dateTimeProdiver = new Mock<IDateTimeProvider>();
-            dateTimeProdiver.Setup(x => x.UtcNow).Returns(new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc));
-            int userId = 3;
-            var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
             int testAuthorId = 1;
             List<int> questionIds = SeedQuestions(testAuthorId);
-            ScheduledTest test = PrepareTestForUsers("test#1", publishDate, startDate, endDate, testAuthorId, 20, usersTakingTest, questionIds);
-            dbContext.Add(test);
-            dbContext.SaveChanges();
-            var testId = test.Id;
-            var userContextMock = new Mock<IUserContext>();
-            userContextMock.Setup(x => x.UserId).Returns(userId);
-            var service = new TestService(dbContext, userContextMock.Object, dateTimeProdiver.Object);
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow)
+                .IncludeUser(userId)
+                .SetAsCurrentlyAvailable()
+                .Build();
+            InsertData(scheduledTest);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
 
             //act
-            service.MarkTestAsStartedIfItHasntBeenMarkedAlready(testId, userId);
+            service.MarkTestAsStartedIfItHasntBeenMarkedAlready(scheduledTest.Id, userId);
 
             //assert
-            var userTest = dbContext.UserTests.Single(x => x.ScheduledTestId == testId && x.UserId == userId);
+            var userTest = dbContext.UserTests.Single(x => x.ScheduledTestId == scheduledTest.Id && x.UserId == userId);
             userTest.StartDate.Should().Be(utcNow);
         }
 
@@ -237,60 +234,27 @@ namespace KtTest.Tests.ServiceTests
         {
             //arrange
             var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
-            DateTime publishDate = utcNow.AddDays(-1);
-            DateTime startDate = utcNow.AddMinutes(-20);
-            DateTime endDate = utcNow.AddMinutes(10);
             var dateTimeProdiver = new Mock<IDateTimeProvider>();
-            dateTimeProdiver.Setup(x => x.UtcNow).Returns(new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc));
-            int userId = 3;
-            var usersTakingTest = new int[] { 2, userId, 4, 5 }.AsEnumerable();
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
             int testAuthorId = 1;
             List<int> questionIds = SeedQuestions(testAuthorId);
-            ScheduledTest test = PrepareTestForUsers("test#1", publishDate, startDate, endDate, testAuthorId, 20, usersTakingTest, questionIds);
-            dbContext.Add(test);
-            dbContext.SaveChanges();
-            var testId = test.Id;
-            var userContextMock = new Mock<IUserContext>();
-            userContextMock.Setup(x => x.UserId).Returns(userId);
-            var service = new TestService(dbContext, userContextMock.Object, dateTimeProdiver.Object);
-            var userTestStartDate = utcNow.AddMinutes(-30);
-            dbContext.UserTests.Single(x => x.ScheduledTestId == testId && x.UserId == userId).SetStartDate(userTestStartDate);
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow)
+                .IncludeUser(userId)
+                .SetAsCurrentlyAvailable()
+                .Build();
+            InsertData(scheduledTest);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
+            var userTestStartDate = utcNow.AddMinutes(-5);
+            dbContext.UserTests.Single(x => x.ScheduledTestId == scheduledTest.Id && x.UserId == userId).SetStartDate(userTestStartDate);
 
             //act
-            service.MarkTestAsStartedIfItHasntBeenMarkedAlready(testId, userId);
+            service.MarkTestAsStartedIfItHasntBeenMarkedAlready(scheduledTest.Id, userId);
 
             //assert
-            var userTest = dbContext.UserTests.Single(x => x.ScheduledTestId == testId && x.UserId == userId);
+            var userTest = dbContext.UserTests.Single(x => x.ScheduledTestId == scheduledTest.Id && x.UserId == userId);
             userTest.StartDate.Should().Be(userTestStartDate);
-        }
-
-        private ScheduledTest PrepareTestForUsers(IDateTimeProvider dateTimeProvider, int testAuthorId, IEnumerable<int> userIds, IEnumerable<int> questionsIds, bool testStarted = true)
-        {
-            var testTemplate = new TestTemplate("test 1", 1, questionsIds);
-            dbContext.TestTemplates.Add(testTemplate);
-            dbContext.SaveChanges();
-
-            var publishDate = dateTimeProvider.UtcNow.AddMinutes(-10);
-            var startDate = dateTimeProvider.UtcNow.AddMinutes(-5);
-            var endDate = dateTimeProvider.UtcNow.AddMinutes(25);
-
-            if (!testStarted)
-            {
-                startDate = dateTimeProvider.UtcNow.AddMinutes(5);
-            }
-
-            var scheduledTest = new ScheduledTest(testTemplate.Id, publishDate, startDate, endDate, 20, userIds);
-            return scheduledTest;
-        }
-
-        private ScheduledTest PrepareTestForUsers(string testName, DateTime publishDate, DateTime startDate, DateTime endDate, int testAuthorId, int duration, IEnumerable<int> userIds, IEnumerable<int> questionsIds)
-        {
-            var testTemplate = new TestTemplate(testName, testAuthorId, questionsIds);
-            dbContext.TestTemplates.Add(testTemplate);
-            dbContext.SaveChanges();
-
-            var scheduledTest = new ScheduledTest(testTemplate.Id, publishDate, startDate, endDate, duration, userIds);
-            return scheduledTest;
         }
 
         private List<int> SeedQuestions(int authorId)

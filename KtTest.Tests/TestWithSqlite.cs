@@ -24,6 +24,12 @@ namespace KtTest.Tests
             dbContext.Database.EnsureCreated();
         }
 
+        public void InsertData<T>(T data) where T : class
+        {
+            dbContext.Set<T>().Add(data);
+            dbContext.SaveChanges();
+        }
+
         public void Dispose()
         {
             _connection.Close();
