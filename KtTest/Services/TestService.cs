@@ -33,19 +33,6 @@ namespace KtTest.Services
             return test.Id;
         }
 
-        public async Task<OperationResult<Paginated<TestTemplate>>> GetTestTemplates(int offset, int limit)
-        {
-            int authorId = userContext.UserId;
-            var tests = await dbContext.TestTemplates
-                .Where(x => x.AuthorId == authorId)
-                .Include(x => x.TestItems)
-                .Skip(offset)
-                .Take(limit + 1)
-                .ToListAsync();
-
-            return new Paginated<TestTemplate>(limit, tests);
-        }
-
         public async Task<OperationResult<bool>> CanGetTest(int testId, int studentId)
         {
             var userTest = await dbContext.UserTests
@@ -137,7 +124,6 @@ namespace KtTest.Services
 
         public async Task<OperationResult> AddUserAnswers(int testId, List<UserAnswer> userAnswers)
         {
-            var result = new OperationResult();
             var userTest = await dbContext.UserTests
                 .Where(x => x.ScheduledTestId == testId && x.UserId == userContext.UserId)
                 .FirstOrDefaultAsync();
