@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using KtTest.Dtos.Wizard;
+using KtTest.Infrastructure.Data;
 using KtTest.Infrastructure.Mappers;
 using KtTest.IntegrationTests.ApiResponses;
 using KtTest.Models;
@@ -64,6 +65,39 @@ namespace KtTest.IntegrationTests.Tests
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
             var validationError = fixture.Deserialize<ValidationErrorResponse>(responseJson);
             validationError.Errors.Should().ContainKey("Answer");
+        }
+
+        [Fact]
+        public async Task ShouldNotCreateNewQuestionWithChoicesBecauseChoiceDtoIsNotValid()
+        {
+            var questionDtoWithChoiceContentTooLong = new QuestionWithChoiceAnswersDto
+            {
+                Choices = new List<ChoiceDto>
+                {
+                    new ChoiceDto
+                    {
+                        Content = "a",
+                        Valid = false
+                    },
+                    new ChoiceDto
+                    {
+                        Content = new string('b', DataConstraints.Question.MaxAnswerLength + 1),
+                        Valid = true
+                    },
+                },
+                ChoiceAnswerType = ChoiceAnswerType.SingleChoice,
+                AllValidChoicesRequired = true,
+                Question = "question",
+                Score = 1.5f
+            };
+
+            var json = fixture.Serialize(questionDtoWithChoiceContentTooLong);
+            var response = await fixture.RequestSender.PostAsync($"questions", json);
+            var responseJson = await response.Content.ReadAsStringAsync();
+
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            var validationError = fixture.Deserialize<ValidationErrorResponse>(responseJson);
+            validationError.Errors.Should().ContainKey("Choices[1].Content");
         }
 
         [Fact]

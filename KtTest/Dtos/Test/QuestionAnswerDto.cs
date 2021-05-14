@@ -30,7 +30,7 @@ namespace KtTest.Dtos.Test
     {
         public WrittenAnswerDtoValidator()
         {
-            RuleFor(x => x.Text).MaximumLength(DataConstraints.Answer.MaxWrittenAnswerLength);
+            RuleFor(x => x.Text).MaximumLength(DataConstraints.Question.MaxAnswerLength);
         }
     }
 

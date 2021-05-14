@@ -26,7 +26,7 @@ namespace KtTest.Dtos.Wizard
     }
 
     public class ChoiceDto
-    { 
+    {
         public string Content { get; set; }
         public bool Valid { get; set; }
     }
@@ -53,6 +53,10 @@ namespace KtTest.Dtos.Wizard
         public QuestionWithChoiceAnswersDtoValidator()
         {
             RuleFor(x => x.Choices).NotEmpty();
+            RuleForEach(x => x.Choices).ChildRules(choices =>
+            {
+                choices.RuleFor(x => x.Content).NotEmpty().MaximumLength(DataConstraints.Question.MaxAnswerLength);
+            });
         }
     }
 }

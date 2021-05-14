@@ -26,11 +26,6 @@ namespace KtTest.Infrastructure.Data
             public static float MinScore => 0f;
         }
 
-        public class Answer
-        {
-            public static int MaxWrittenAnswerLength => 256;
-        }
-
         public class Group
         {
             public static int MaxNameLength => 256;
