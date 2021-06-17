@@ -27,12 +27,13 @@ namespace KtTest.Readers
             var questionTests = await dbContext
                 .Questions
                 .FromSqlInterpolated($"SELECT Id, Content from Questions WHERE AuthorId = {authorId} ORDER BY Id DESC OFFSET {offset} ROWS FETCH NEXT {limit + 1} ROWS ONLY")
+                .Include(x => x.Answer)
                 .GroupJoin(dbContext.TestItems,
                     x => x.Id,
                     y => y.QuestionId,
-                    (x, y) => new { x.Id, x.Content, TestItem = y })
+                    (x, y) => new { x.Id, x.Content, x.Answer, TestItem = y })
                 .SelectMany(x => x.TestItem.DefaultIfEmpty(),
-                    (x, y) => new { x.Id, x.Content, TestItem = y })
+                    (x, y) => new { x.Id, x.Content, x.Answer, TestItem = y })
                 .ToArrayAsync();
 
             var idHeaderDtos = new Dictionary<int, QuestionHeaderDto>();
@@ -49,7 +50,14 @@ namespace KtTest.Readers
                     {
                         Id = question.Id,
                         Content = question.Content,
-                        NumberOfTimesUsedInTests = question.TestItem == null ? 0 : 1
+                        NumberOfTimesUsedInTests = question.TestItem == null ? 0 : 1,
+                        Type = question.Answer switch
+                        {
+                            WrittenAnswer writtenAnswer => "Written",
+                            ChoiceAnswer choiceAnswer => choiceAnswer.ChoiceAnswerType == ChoiceAnswerType.SingleChoice
+                                ? "Single choice"
+                                : "Multiple choice"
+                        }
                     };
                     idHeaderDtos.Add(question.Id, questionHeaderDto);
                 }

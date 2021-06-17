@@ -10,5 +10,6 @@ namespace KtTest.Dtos.Wizard
         public int Id { get; set; }
         public string Content { get; set; }
         public int NumberOfTimesUsedInTests { get; set; }
+        public string Type { get; set; }
     }
 }
