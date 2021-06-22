@@ -137,8 +137,9 @@ namespace KtTest
 
             app.UseCors(builder =>
             {
-                builder.WithOrigins("http://localhost:3000");
-                builder.AllowAnyHeader();
+                builder.WithOrigins("http://localhost:3000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
             });
 
             if (env.IsDevelopment())
