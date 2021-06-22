@@ -29,11 +29,10 @@ namespace KtTest.Services
             return group.Id;
         }
 
-        public async Task<OperationResult> AddUserToGroup(int userId, int groupId)
+        public async Task<OperationResult<Unit>> AddUserToGroup(int userId, int groupId)
         {
             var hasUserJoinedGroup = await dbContext.GroupMembers.Where(x => x.UserId == userId && x.GroupId == groupId).FirstOrDefaultAsync() != null;
 
-            var result = new OperationResult();
             if (hasUserJoinedGroup)
             {
                 return new BadRequestError();
@@ -42,7 +41,7 @@ namespace KtTest.Services
             var groupMember = new GroupMember { GroupId = groupId, UserId = userId };
             dbContext.GroupMembers.Add(groupMember);
             await dbContext.SaveChangesAsync();
-            return result;
+            return OperationResult.Ok;
         }
 
         public async Task<bool> IsUserMemberOfGroup(int userId, int groupId)

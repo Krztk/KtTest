@@ -1,29 +1,13 @@
 ﻿using KtTest.Results.Errors;
 using System;
+using System.Threading.Tasks;
 
 namespace KtTest.Results
 {
-    public class OperationResult
+    public class OperationResult<TData>
     {
-        private static readonly OperationResult okResult = new OperationResult();
         public ErrorBase Error { get; }
         public bool Succeeded => Error == null;
-        public OperationResult()
-        {
-        }
-
-        public OperationResult(ErrorBase error)
-        {
-            Error = error;
-        }
-
-        public static OperationResult Ok() => okResult;
-
-        public static implicit operator OperationResult(ErrorBase error) => new OperationResult(error);
-    }
-
-    public class OperationResult<TData> : OperationResult
-    {
         public TData Data { get; set; }
 
         public OperationResult(TData data)
@@ -31,13 +15,19 @@ namespace KtTest.Results
             Data = data;
         }
 
-        public OperationResult(ErrorBase error) : base(error)
+        public OperationResult(ErrorBase error)
         {
+            Error = error;
         }
 
         public OperationResult<TResult> Then<TResult>(Func<TData, OperationResult<TResult>> func)
         {
             return Succeeded ? func(Data) : Error;
+        }
+
+        public async Task<OperationResult<TResult>> Then<TResult>(Func<TData, Task<OperationResult<TResult>>> func)
+        {
+            return Succeeded ? await func(Data) : Error;
         }
 
         public T Match<T>(Func<ErrorBase, T> onError, Func<TData, T> onSuccess)
@@ -46,9 +36,13 @@ namespace KtTest.Results
         }
 
         public static implicit operator OperationResult<TData>(ErrorBase error) => new OperationResult<TData>(error);
-
         public static implicit operator OperationResult<TData>(TData data) => new OperationResult<TData>(data);
-
         public static implicit operator TData(OperationResult<TData> result) => result.Data;
+    }
+
+    public static class OperationResult
+    {
+        public static OperationResult<Unit> Ok => okResult;
+        private static readonly OperationResult<Unit> okResult = new OperationResult<Unit>(Unit.Value);
     }
 }

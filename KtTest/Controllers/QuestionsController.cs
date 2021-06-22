@@ -40,6 +40,13 @@ namespace KtTest.Controllers
             return ActionResult(result);
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteQuestion(int id)
+        {
+            var result = await questionOrchestrator.DeleteQuestion(id);
+            return ActionResult(result);
+        }
+
         [HttpGet]
         public IActionResult GetQuestions([FromQuery]Pagination pagination)
         {

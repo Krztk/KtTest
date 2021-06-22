@@ -122,7 +122,7 @@ namespace KtTest.Services
             dbContext.SaveChanges();
         }
 
-        public async Task<OperationResult> AddUserAnswers(int testId, List<UserAnswer> userAnswers)
+        public async Task<OperationResult<Unit>> AddUserAnswers(int testId, List<UserAnswer> userAnswers)
         {
             var userTest = await dbContext.UserTests
                 .Where(x => x.ScheduledTestId == testId && x.UserId == userContext.UserId)
@@ -153,12 +153,11 @@ namespace KtTest.Services
             userTest.SetEndDate(dateTimeProvider.UtcNow);
             dbContext.UserAnswers.AddRange(userAnswers);
             await dbContext.SaveChangesAsync();
-            return new OperationResult();
+            return OperationResult.Ok;
         }
 
-        public async Task<OperationResult> ScheduleTest(int testId, DateTime startDate, DateTime endDate, int durationInMinutes, IList<UserInfo> students)
+        public async Task<OperationResult<Unit>> ScheduleTest(int testId, DateTime startDate, DateTime endDate, int durationInMinutes, IList<UserInfo> students)
         {
-            var result = new OperationResult();
             var utcNow = dateTimeProvider.UtcNow;
 
             if (startDate <= utcNow || startDate >= endDate)
@@ -189,7 +188,7 @@ namespace KtTest.Services
 
             dbContext.ScheduledTests.Add(test);
             await dbContext.SaveChangesAsync();
-            return result;
+            return OperationResult.Ok;
         }
 
         public bool DoesTestContainQuestions(IEnumerable<int> questionIds, int testId)

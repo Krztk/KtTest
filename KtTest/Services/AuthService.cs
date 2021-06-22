@@ -47,15 +47,14 @@ namespace KtTest.Services
             return new BadRequestError("Username and password don't match.");
         }
 
-        public async Task<OperationResult> RegisterOrganizationOwner(string email, string username, string password)
+        public async Task<OperationResult<Unit>> RegisterOrganizationOwner(string email, string username, string password)
         {
             var user = AppUser.CreateOrganizationOwner(username, email);
             return await CreateUser(password, user);
         }
 
-        public async Task<OperationResult> RegisterUser(string code, string email, string username, string password)
+        public async Task<OperationResult<Unit>> RegisterUser(string code, string email, string username, string password)
         {
-            var result = new OperationResult();
             var invitation = await dbContext.Invitations.FirstOrDefaultAsync(x => x.Code == code);
             if (invitation == null)
             {
@@ -63,7 +62,7 @@ namespace KtTest.Services
             }
 
             var user = AppUser.CreateOrganizationMember(email, username, invitation.IsTeacher, invitation.InvitedBy);
-            result = await CreateUser(password, user);
+            var result = await CreateUser(password, user);
             if (result.Succeeded)
             {
                 dbContext.Invitations.Remove(invitation);
@@ -72,13 +71,13 @@ namespace KtTest.Services
             return result;
         }
 
-        private async Task<OperationResult> CreateUser(string password, AppUser user)
+        private async Task<OperationResult<Unit>> CreateUser(string password, AppUser user)
         {
             var createUserResult = await userManager.CreateAsync(user, password);
 
             if (createUserResult.Succeeded)
             {
-                return OperationResult.Ok();
+                return OperationResult.Ok;
             }
             else
             {

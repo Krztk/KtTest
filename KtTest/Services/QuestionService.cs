@@ -32,7 +32,7 @@ namespace KtTest.Services
             return question.Id;
         }
 
-        public async Task<OperationResult> UpdateQuestion(int questionId, string content, Answer answer, IEnumerable<int> categoryIds)
+        public async Task<OperationResult<Unit>> UpdateQuestion(int questionId, string content, Answer answer, IEnumerable<int> categoryIds)
         {
             var question = dbContext.Questions.Local.FirstOrDefault(x => x.Id == questionId);
             if (question == null)
@@ -44,7 +44,18 @@ namespace KtTest.Services
 
             question.UpdateAnswer(answer);
             await dbContext.SaveChangesAsync();
-            return new OperationResult();
+            return OperationResult.Ok;
+        }
+
+        public async Task<OperationResult<Unit>> DeleteQuestion(int questionId)
+        {
+            var question = dbContext.Questions.Local.FirstOrDefault(x => x.Id == questionId);
+            if (question == null)
+                throw new ValueNotInTheCacheException("the question should already be in cache.");
+
+            dbContext.Questions.Remove(question);
+            await dbContext.SaveChangesAsync();
+            return OperationResult.Ok;
         }
 
         public bool DoQuestionsExist(List<int> questionIds)

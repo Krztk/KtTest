@@ -7,7 +7,7 @@ namespace KtTest
 {
     public class CustomControllerBase : ControllerBase
     {
-        protected IActionResult ActionResult(OperationResult result)
+        protected IActionResult ActionResult(OperationResult<Unit> result)
         {
             if (result.Succeeded)
             {

@@ -22,7 +22,7 @@ namespace KtTest.Application_Services
             this.userContext = userContext;
         }
 
-        public async Task<OperationResult> InviteUser(InviteUserDto inviteUserDto)
+        public async Task<OperationResult<Unit>> InviteUser(InviteUserDto inviteUserDto)
         {
             return await organizationService.CreateRegistrationInvitation(inviteUserDto.Email, inviteUserDto.IsTeacher);
         }

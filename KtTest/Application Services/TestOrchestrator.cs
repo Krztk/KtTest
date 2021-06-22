@@ -118,7 +118,7 @@ namespace KtTest.Application_Services
             return await testReader.GetTest(id);
         }
 
-        public async Task<OperationResult> AddUserAnswers(int testId, SendTestAnswersDto dto)
+        public async Task<OperationResult<Unit>> AddUserAnswers(int testId, SendTestAnswersDto dto)
         {
             int userId = userContext.UserId;
             List<UserAnswer> answers = dto.Answers
@@ -144,9 +144,8 @@ namespace KtTest.Application_Services
             return testReader.GetUserAnswers(userContext.UserId, testId);
         }
 
-        public async Task<OperationResult> ScheduleTest(int testId, PublishTestDto publishTestDto)
+        public async Task<OperationResult<Unit>> ScheduleTest(int testId, PublishTestDto publishTestDto)
         {
-            var result = new OperationResult();
             if (publishTestDto.StartDate >= publishTestDto.EndDate
                 && dateTimeProvider.UtcNow >= publishTestDto.StartDate)
             {

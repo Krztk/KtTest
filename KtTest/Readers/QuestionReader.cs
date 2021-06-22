@@ -5,6 +5,7 @@ using KtTest.Models;
 using KtTest.Results;
 using KtTest.Results.Errors;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -56,7 +57,8 @@ namespace KtTest.Readers
                             WrittenAnswer writtenAnswer => "Written",
                             ChoiceAnswer choiceAnswer => choiceAnswer.ChoiceAnswerType == ChoiceAnswerType.SingleChoice
                                 ? "Single choice"
-                                : "Multiple choice"
+                                : "Multiple choice",
+                            _ => throw new NotImplementedException()
                         }
                     };
                     idHeaderDtos.Add(question.Id, questionHeaderDto);

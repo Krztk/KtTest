@@ -153,10 +153,39 @@ namespace KtTest.Tests.ServiceTests
             var newAnswer = new WrittenAnswer("New answer", maxScore);
 
             //act
-            Func<Task<OperationResult>> codeUnderTest = async () => await service.UpdateQuestion(question.Id, "New content", newAnswer, null);
+            Func<Task<OperationResult<Unit>>> codeUnderTest = async () => await service.UpdateQuestion(question.Id, "New content", newAnswer, null);
 
             //assert
             await codeUnderTest.Should().ThrowExactlyAsync<ValueNotInTheCacheException>();
+        }
+
+        [Fact]
+        public async Task DeleteQuestion_ValidId_DeletesQuestions()
+        {
+            //arrange
+            var userId = 11;
+            float maxScore = 3f;
+            var questionsInDb = new List<Question>
+            {
+                new Question("1st question", new WrittenAnswer("1st question's answer", maxScore), userId),
+                new Question("2st question", new WrittenAnswer("2nd question's answer", maxScore), userId),
+            };
+            dbContext.Questions.AddRange(questionsInDb);
+            dbContext.SaveChanges();
+            questionsInDb.ForEach(x => x.Id.Should().NotBe(0));
+            var userContextMock = new Mock<IUserContext>();
+            userContextMock.Setup(x => x.UserId).Returns(userId);
+            var service = new QuestionService(dbContext, userContextMock.Object);
+            int questionId = questionsInDb[0].Id;
+            //act
+            var result = await service.DeleteQuestion(questionId);
+
+            //assert
+            result.Succeeded.Should().BeTrue();
+            var questions = dbContext.Questions.ToList();
+            questions.Should().NotBeEmpty();
+            var doesContainQuestion = questions.Any(x => x.Id == questionId);
+            doesContainQuestion.Should().BeFalse();
         }
     }
 }

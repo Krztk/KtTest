@@ -6,6 +6,7 @@ using KtTest.Results;
 using KtTest.Results.Errors;
 using KtTest.Services;
 using System.Threading.Tasks;
+using KtTest.Extensions;
 
 namespace KtTest.Application_Services
 {
@@ -61,10 +62,23 @@ namespace KtTest.Application_Services
             return await questionReader.GetQuestionHeaders(userContext.UserId, pagination.Offset, pagination.Limit);
         }
 
-        public async Task<OperationResult> UpdateQuestion(int questionId, QuestionDto questionDto)
+        public async Task<OperationResult<Unit>> UpdateQuestion(int questionId, QuestionDto questionDto)
         {
-            var result = new OperationResult();
+            return await CanEditOrDeleteQuestion(questionId).Then(x =>
+            {
+                Answer answer = questionMapper.MapToAnswer(questionDto);
+                return questionService.UpdateQuestion(questionId, questionDto.Question, answer, questionDto.Categories);
+            });
+        }
 
+        public async Task<OperationResult<Unit>> DeleteQuestion(int questionId)
+        {
+            return await CanEditOrDeleteQuestion(questionId)
+                .Then(x => questionService.DeleteQuestion(questionId));
+        }
+
+        private async Task<OperationResult<Unit>> CanEditOrDeleteQuestion(int questionId)
+        {
             var isQuestionAuthor = await questionService.IsAuthorOfQuestion(userContext.UserId, questionId);
             if (!isQuestionAuthor)
             {
@@ -76,8 +90,7 @@ namespace KtTest.Application_Services
                 return new BadRequestError("Cannot edit the question if there is a test which contains it that has already started");
             }
 
-            Answer answer = questionMapper.MapToAnswer(questionDto);
-            return await questionService.UpdateQuestion(questionId, questionDto.Question, answer, questionDto.Categories);
+            return OperationResult.Ok;
         }
     }
 }

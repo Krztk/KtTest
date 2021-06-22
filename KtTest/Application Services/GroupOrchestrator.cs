@@ -78,7 +78,7 @@ namespace KtTest.Application_Services
             return await groupService.CreateGroup(createGroupDto.Name);
         }
 
-        public async Task<OperationResult> AddMemberToGroup(int groupId, AddMemberDto addMemberDto)
+        public async Task<OperationResult<Unit>> AddMemberToGroup(int groupId, AddMemberDto addMemberDto)
         {
             int owner = userContext.UserId;
             int idOfAddedUser = addMemberDto.UserId;

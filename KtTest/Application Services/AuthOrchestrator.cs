@@ -20,12 +20,12 @@ namespace KtTest.Application_Services
                 .Then<LoginResponseDto>(x => new LoginResponseDto { Token = x });
         }
 
-        public async Task<OperationResult> RegisterOrganizationOwner(RegisterDto registerDto)
+        public async Task<OperationResult<Unit>> RegisterOrganizationOwner(RegisterDto registerDto)
         {
             return await authService.RegisterOrganizationOwner(registerDto.Email, registerDto.Username, registerDto.Password);
         }
 
-        public async Task<OperationResult> RegisterRegularUser(string code, RegisterDto registerDto)
+        public async Task<OperationResult<Unit>> RegisterRegularUser(string code, RegisterDto registerDto)
         {
             return await authService.RegisterUser(code, registerDto.Email, registerDto.Username, registerDto.Password);
         }
