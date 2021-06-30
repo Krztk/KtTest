@@ -49,7 +49,7 @@ namespace KtTest.Services
 
         public async Task<OperationResult<Unit>> RegisterOrganizationOwner(string email, string username, string password)
         {
-            var user = AppUser.CreateOrganizationOwner(username, email);
+            var user = AppUser.CreateOrganizationOwner(email, username);
             return await CreateUser(password, user);
         }
 
