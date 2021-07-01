@@ -231,6 +231,11 @@ namespace KtTest.Services
                 .CountAsync() > 0;
         }
 
+        public async Task<bool> IsQuestionIncludedInTest(int questionId)
+        {
+            return await dbContext.TestItems.Where(x => x.QuestionId == questionId).CountAsync() > 0;
+        }
+
         private bool CanAddAnswers(DateTime? userTestStartDate, int testDuration)
         {
             return userTestStartDate.HasValue

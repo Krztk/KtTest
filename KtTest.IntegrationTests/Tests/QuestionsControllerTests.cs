@@ -4,6 +4,7 @@ using KtTest.Infrastructure.Data;
 using KtTest.Infrastructure.Mappers;
 using KtTest.IntegrationTests.ApiResponses;
 using KtTest.Models;
+using KtTest.TestDataBuilders;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -153,6 +154,76 @@ namespace KtTest.IntegrationTests.Tests
             result.Data.Should().NotBeEmpty();
             foreach (var questionDto in questionDtos)
                 result.Data.Should().ContainEquivalentOf(questionDto);
+        }
+
+        [Fact]
+        public async Task ShouldNotDeleteQuestionUsedInTestTemplate()
+        {
+            var authorId = fixture.UserId;
+            var writtenAnswer = new WrittenAnswer("answer", 1f);
+            var question = new Question("Question?", writtenAnswer, authorId);
+
+            await fixture.ExecuteDbContext(db =>
+            {
+                db.Questions.Add(question);
+                return db.SaveChangesAsync();
+            });
+            var testTemplate = new TestTemplate("new test template", authorId, new int[] { question.Id });
+            await fixture.ExecuteDbContext(db =>
+            {
+                db.TestTemplates.Add(testTemplate);
+                return db.SaveChangesAsync();
+            });
+
+            var response = await fixture.RequestSender.DeleteAsync($"questions/{question.Id}");
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        }
+
+        [Fact]
+        public async Task ShouldNotUpdateQuestionUsedInTestThatHasStarted()
+        {
+            var authorId = fixture.UserId;
+            var writtenAnswer = new WrittenAnswer("answer", 1f);
+            var question = new Question("Question?", writtenAnswer, authorId);
+
+            await fixture.ExecuteDbContext(db =>
+            {
+                db.Questions.Add(question);
+                return db.SaveChangesAsync();
+            });
+
+            var testTemplate = new TestTemplateBuilder(authorId, new[] { question.Id }).Build();
+            await fixture.ExecuteDbContext(db =>
+            {
+                db.TestTemplates.Add(testTemplate);
+                return db.SaveChangesAsync();
+            });
+
+            var scheduledTest = new ScheduledTestBuilder(
+                    testTemplate.Id,
+                    IntegrationTestsDateTimeProvider.utcNow)
+                .SetAsCurrentlyAvailable()
+                .WithUsers(new[] { 2, 3, 4 })
+                .Build();
+
+            await fixture.ExecuteDbContext(db =>
+            {
+                db.ScheduledTests.Add(scheduledTest);
+                return db.SaveChangesAsync();
+            });
+
+            var updateQuestionDto = new QuestionWithWrittenAnswerDto
+            {
+                Answer = "new answer",
+                Question = "new question",
+                Score = 1f,
+                Categories = new List<int>(),
+            };
+
+            var json = fixture.Serialize(updateQuestionDto);
+            var response = await fixture.RequestSender.PostAsync($"questions/{question.Id}", json);
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         }
     }
 }

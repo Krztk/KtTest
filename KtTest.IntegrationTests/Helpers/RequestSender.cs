@@ -62,6 +62,15 @@ namespace KtTest.IntegrationTests.Helpers
             }
         }
 
+        public Task<HttpResponseMessage> DeleteAsync(string url)
+        {
+            using (var requestMessage = new HttpRequestMessage(HttpMethod.Delete, url))
+            {
+                requestMessage.Headers.Authorization = defaultAuthHeaderValue;
+                return httpClient.SendAsync(requestMessage);
+            }
+        }
+
         private AuthenticationHeaderValue IfTokenIsNotEmptyCreateNewAuthenticationHeaderOtherwiseDefault(string token)
         {
             if (token == null)

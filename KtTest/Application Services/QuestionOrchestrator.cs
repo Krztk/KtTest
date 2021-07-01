@@ -64,7 +64,7 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<Unit>> UpdateQuestion(int questionId, QuestionDto questionDto)
         {
-            return await CanEditOrDeleteQuestion(questionId).Then(x =>
+            return await CanUpdateQuestion(questionId).Then(x =>
             {
                 Answer answer = questionMapper.MapToAnswer(questionDto);
                 return questionService.UpdateQuestion(questionId, questionDto.Question, answer, questionDto.Categories);
@@ -73,11 +73,11 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<Unit>> DeleteQuestion(int questionId)
         {
-            return await CanEditOrDeleteQuestion(questionId)
+            return await CanDeleteQuestion(questionId)
                 .Then(x => questionService.DeleteQuestion(questionId));
         }
 
-        private async Task<OperationResult<Unit>> CanEditOrDeleteQuestion(int questionId)
+        private async Task<OperationResult<Unit>> CanUpdateQuestion(int questionId)
         {
             var isQuestionAuthor = await questionService.IsAuthorOfQuestion(userContext.UserId, questionId);
             if (!isQuestionAuthor)
@@ -87,7 +87,23 @@ namespace KtTest.Application_Services
 
             if (await testService.HasTestWithQuestionStarted(questionId))
             {
-                return new BadRequestError("Cannot edit the question if there is a test which contains it that has already started");
+                return new BadRequestError("Cannot update the question if there is a test, which contains it, that has already started");
+            }
+
+            return OperationResult.Ok;
+        }
+
+        private async Task<OperationResult<Unit>> CanDeleteQuestion(int questionId)
+        {
+            var isQuestionAuthor = await questionService.IsAuthorOfQuestion(userContext.UserId, questionId);
+            if (!isQuestionAuthor)
+            {
+                return new BadRequestError();
+            }
+
+            if (await testService.IsQuestionIncludedInTest(questionId))
+            {
+                return new BadRequestError("Cannot delete question used in test");
             }
 
             return OperationResult.Ok;

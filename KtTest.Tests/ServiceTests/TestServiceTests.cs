@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using KtTest.Models;
 using KtTest.Services;
-using KtTest.Tests.TestDataBuilders;
+using KtTest.TestDataBuilders;
 using Moq;
 using System;
 using System.Collections.Generic;

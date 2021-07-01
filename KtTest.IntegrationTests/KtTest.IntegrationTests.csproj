@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KtTest.TestDataBuilders\KtTest.TestDataBuilders.csproj" />
     <ProjectReference Include="..\KtTest\KtTest.csproj" />
   </ItemGroup>
 
