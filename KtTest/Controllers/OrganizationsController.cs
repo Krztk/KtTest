@@ -21,7 +21,7 @@ namespace KtTest.Controllers
             this.organizationOrchestrator = organizationOrchestrator;
         }
 
-        [HttpPost("invite")]
+        [HttpPost("invitations")]
         public async Task<IActionResult> InviteUser(InviteUserDto dto)
         {
             var result = await organizationOrchestrator.InviteUser(dto);

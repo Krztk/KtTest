@@ -48,10 +48,13 @@ namespace KtTest.IntegrationTests.Tests
             };
 
             var json = fixture.Serialize(dto);
-            var response = await fixture.RequestSender.PostAsync($"organizations/invite", json);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var response = await fixture.RequestSender.PostAsync($"organizations/invitations", json);
 
-            var invitation = await fixture.ExecuteDbContext(db => db.Invitations.Where(x => x.Email == email).FirstOrDefaultAsync());
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            string responseString = await response.Content.ReadAsStringAsync();
+            int.TryParse(responseString, out int invitationIdFromResponse).Should().BeTrue();
+            var invitation = await fixture.ExecuteDbContext(db => db.Invitations.Where(x => x.Email == email).SingleAsync());
+            invitation.Id.Should().Be(invitationIdFromResponse);
             invitation.InvitedBy.Should().Be(fixture.UserId);
             invitation.IsTeacher.Should().Be(isTeacher);
         }

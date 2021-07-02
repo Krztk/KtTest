@@ -24,7 +24,7 @@ namespace KtTest.Services
             this.dateTimeProvider = dateTimeProvider;
             this.emailSender = emailSender;
         }
-        public async Task<OperationResult<Unit>> CreateRegistrationInvitation(string email, bool isTeacher)
+        public async Task<OperationResult<int>> CreateRegistrationInvitation(string email, bool isTeacher)
         {
             var code = codeGenerator.GenerateCode();
             var invitation = new Invitation(email,
@@ -37,7 +37,7 @@ namespace KtTest.Services
             await dbContext.SaveChangesAsync();
 
             await emailSender.SendEmail(email, code);
-            return OperationResult.Ok;
+            return invitation.Id;
         }
 
         public async Task<bool> IsUserMemberOfOrganization(int ownerId, int userId)
