@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace KtTest.Dtos.Groups
 {
-    public class GroupDto
+    public class GroupHeaderDto
     {
         public int Id { get; set; }
         public string Name { get; set; }

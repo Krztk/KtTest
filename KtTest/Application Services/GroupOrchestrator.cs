@@ -29,12 +29,12 @@ namespace KtTest.Application_Services
             this.userContext = userContext;
         }
 
-        public List<GroupDto> GetGroups()
+        public List<GroupHeaderDto> GetGroupHeaders()
         {
             if (userContext.IsOwner)
-                return groupReader.GetGroups(userContext.UserId);
+                return groupReader.GetGroupHeaders(userContext.UserId);
 
-            return groupReader.GetGroupsWithUser(userContext.UserId);
+            return groupReader.GetGroupHeadersWithUser(userContext.UserId);
         }
 
         public async Task<OperationResult<List<UserDto>>> GetGroupMembers(int groupId)

@@ -21,7 +21,7 @@ namespace KtTest.Controllers
         [HttpGet]
         public IActionResult GetGroups()
         {
-            var result = groupOrchestrator.GetGroups();
+            var result = groupOrchestrator.GetGroupHeaders();
             return Ok(result);
         }
 

@@ -16,7 +16,7 @@ namespace KtTest.Tests.MapperTests
             var groupId = 5;
             var groupName = "group #1";
             var group = new Group(groupId, groupName, ownerId);
-            var expectedDto = new GroupDto
+            var expectedDto = new GroupHeaderDto
             {
                 Id = groupId,
                 Name = groupName
@@ -24,7 +24,7 @@ namespace KtTest.Tests.MapperTests
 
             //act
             var mapper = new GroupServiceMapper();
-            var dto = mapper.MapToGroupDto(group);
+            var dto = mapper.MapToGroupHeader(group);
 
             //assert
             dto.Should().BeEquivalentTo(expectedDto);

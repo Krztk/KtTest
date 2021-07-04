@@ -21,22 +21,22 @@ namespace KtTest.Readers
             this.organizationMapper = organizationMapper;
         }
 
-        public List<GroupDto> GetGroups(int organizationOwner)
+        public List<GroupHeaderDto> GetGroupHeaders(int organizationOwner)
         {
             return dbContext.Groups
                 .Where(x => x.OwnerId == organizationOwner)
                 .OrderByDescending(x => x.Id)
-                .Select(groupMapper.MapToGroupDto)
+                .Select(groupMapper.MapToGroupHeader)
                 .ToList();
         }
 
-        public List<GroupDto> GetGroupsWithUser(int userId)
+        public List<GroupHeaderDto> GetGroupHeadersWithUser(int userId)
         {
             return dbContext.GroupMembers
                 .Include(x => x.Group)
                 .Where(x => x.UserId == userId)
                 .OrderByDescending(x => x.GroupId)
-                .Select(x => groupMapper.MapToGroupDto(x.Group))
+                .Select(x => groupMapper.MapToGroupHeader(x.Group))
                 .ToList();
         }
 

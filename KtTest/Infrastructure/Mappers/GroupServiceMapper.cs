@@ -9,9 +9,9 @@ namespace KtTest.Infrastructure.Mappers
 {
     public class GroupServiceMapper
     {
-        public GroupDto MapToGroupDto(Group group)
+        public GroupHeaderDto MapToGroupHeader(Group group)
         {
-            return new GroupDto
+            return new GroupHeaderDto
             {
                 Id = group.Id,
                 Name = group.Name
