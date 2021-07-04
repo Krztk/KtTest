@@ -19,13 +19,14 @@ namespace KtTest.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetGroups()
+        [Authorize(Policy = "EmployeeOnly")]
+        public IActionResult GetGroupHeaders()
         {
             var result = groupOrchestrator.GetGroupHeaders();
             return Ok(result);
         }
 
-        [Authorize(Policy = "OwnerOnly")]
+        [Authorize(Policy = "EmployeeOnly")]
         [HttpGet("{id}/members")]
         public async Task<IActionResult> GetGroupMembers(int id)
         {
