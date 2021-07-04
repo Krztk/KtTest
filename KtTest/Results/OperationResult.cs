@@ -20,6 +20,16 @@ namespace KtTest.Results
             Error = error;
         }
 
+        public OperationResult<TResult> Bind<TResult>(Func<TData, TResult> func)
+        {
+            return Succeeded ? new OperationResult<TResult>(func(Data)) : Error;
+        }
+
+        public async Task<OperationResult<TResult>> Bind<TResult>(Func<TData, Task<TResult>> func)
+        {
+            return Succeeded ? new OperationResult<TResult>(await func(Data)) : Error;
+        }
+
         public OperationResult<TResult> Then<TResult>(Func<TData, OperationResult<TResult>> func)
         {
             return Succeeded ? func(Data) : Error;

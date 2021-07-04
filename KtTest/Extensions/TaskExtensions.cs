@@ -15,5 +15,15 @@ namespace KtTest.Extensions
         {
             return await (await task).Then(func);
         }
+
+        public static async Task<OperationResult<TOutput>> Bind<TInput, TOutput>(this Task<OperationResult<TInput>> task, Func<TInput, TOutput> func)
+        {
+            return (await task).Bind(func);
+        }
+
+        public static async Task<OperationResult<TOutput>> Bind<TInput, TOutput>(this Task<OperationResult<TInput>> task, Func<TInput, Task<TOutput>> func)
+        {
+            return await (await task).Bind(func);
+        }
     }
 }
