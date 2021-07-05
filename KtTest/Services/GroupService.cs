@@ -63,5 +63,16 @@ namespace KtTest.Services
             groupMembers.RemoveAll(x => x.IsTeacher);
             return groupMembers;
         }
+
+        public async Task<OperationResult<int>> GetIdOfGroupOwner(int groupId)
+        {
+            var group = await dbContext.Groups.Where(x => x.Id == groupId).FirstOrDefaultAsync();
+            if (group == null)
+            {
+                return new BadRequestError();
+            }
+
+            return group.OwnerId;
+        }
     }
 }

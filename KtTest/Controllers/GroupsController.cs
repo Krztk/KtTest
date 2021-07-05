@@ -18,12 +18,20 @@ namespace KtTest.Controllers
             this.groupOrchestrator = groupOrchestrator;
         }
 
-        [HttpGet]
         [Authorize(Policy = "EmployeeOnly")]
+        [HttpGet]
         public IActionResult GetGroupHeaders()
         {
             var result = groupOrchestrator.GetGroupHeaders();
             return Ok(result);
+        }
+
+        [Authorize(Policy = "EmployeeOnly")]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetGroup(int id)
+        {
+            var result = await groupOrchestrator.GetGroup(id);
+            return ActionResult(result);
         }
 
         [Authorize(Policy = "EmployeeOnly")]

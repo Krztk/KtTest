@@ -9,7 +9,7 @@ namespace KtTest.Tests.MapperTests
     public class GroupMapperTests
     {
         [Fact]
-        public void MapToGroupDto_Group_ValidDto()
+        public void MapToGroupHeader_Group_ValidDto()
         {
             //arrange
             var ownerId = 3;
@@ -23,7 +23,7 @@ namespace KtTest.Tests.MapperTests
             };
 
             //act
-            var mapper = new GroupServiceMapper();
+            var mapper = new GroupServiceMapper(new OrganizationServiceMapper());
             var dto = mapper.MapToGroupHeader(group);
 
             //assert

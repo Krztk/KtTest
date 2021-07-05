@@ -2,9 +2,12 @@
 using KtTest.Dtos.Organizations;
 using KtTest.Infrastructure.Data;
 using KtTest.Infrastructure.Mappers;
+using KtTest.Results;
+using KtTest.Results.Errors;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace KtTest.Readers
 {
@@ -56,6 +59,21 @@ namespace KtTest.Readers
                 .Where(x => x.InvitedBy == organizationOwner && !x.GroupMembers.Any(x=>x.GroupId == groupId))
                 .Select(organizationMapper.MapToUserDto)
                 .ToList();
+        }
+
+        public OperationResult<GroupDto> GetGroup(int groupId)
+        {
+            var group = dbContext.Groups
+                .Where(x => x.Id == groupId)
+                .Include(x => x.GroupMembers)
+                .ThenInclude(x => x.User)
+                .Select(groupMapper.MapToGroup)
+                .FirstOrDefault();
+
+            if (group == null)
+                return new DataNotFoundError();
+
+            return group;
         }
     }
 }

@@ -62,16 +62,5 @@ namespace KtTest.Services
 
             return user;
         }
-
-        public async Task<OperationResult<int>> GetIdOfGroupOwner(int groupId)
-        {
-            var group = await dbContext.Groups.Where(x => x.Id == groupId).FirstOrDefaultAsync();
-            if (group == null)
-            {
-                return new BadRequestError();
-            }
-
-            return group.OwnerId;
-        }
     }
 }

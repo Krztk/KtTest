@@ -117,5 +117,29 @@ namespace KtTest.IntegrationTests.Tests
 
             members.Should().BeEquivalentTo(membersInOrganizationButNotInGroup);
         }
+
+        [Fact]
+        public async Task ShouldGetGroup()
+        {
+            var groupName = "ShouldGetGroup#1";
+            var group = new Group(groupName, fixture.UserId);
+            group.GroupMembers.Add(new GroupMember { UserId = fixture.UserId });
+            var member = fixture.OrganizationOwnerMembers[fixture.UserId].First();
+            group.GroupMembers.Add(new GroupMember { UserId = member.Id });
+
+            await fixture.ExecuteDbContext(x => {
+                x.Groups.Add(group);
+                return x.SaveChangesAsync();
+            });
+
+            var groupId = group.Id;
+
+            var response = await fixture.RequestSender.GetAsync($"groups/{groupId}");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var responseJson = await response.Content.ReadAsStringAsync();
+            var groupDto = fixture.Deserialize<GroupDto>(responseJson);
+            groupDto.Name.Should().Be(groupName);
+            groupDto.GroupMembers.Should().NotBeEmpty();
+        }
     }
 }
