@@ -8,6 +8,7 @@ namespace KtTest.TestDataBuilders
 {
     public class ScheduledTestBuilder
     {
+        private int scheduledTestId;
         private int testTemplateId;
         private readonly DateTime now;
         private DateTime publishDate;
@@ -15,6 +16,7 @@ namespace KtTest.TestDataBuilders
         private DateTime endDate;
         private int duration = 15;
         private List<int> userIds = new List<int> { 77, 78, 79 };
+        private List<UserTest> userTests = null;
 
         public ScheduledTestBuilder(int testTemplateId, DateTime now)
         {
@@ -23,6 +25,12 @@ namespace KtTest.TestDataBuilders
             endDate = now.AddMinutes(10);
             this.testTemplateId = testTemplateId;
             this.now = now;
+        }
+
+        public ScheduledTestBuilder WithId(int id)
+        {
+            scheduledTestId = id;
+            return this;
         }
 
         public ScheduledTestBuilder SetAsCurrentlyAvailable()
@@ -61,6 +69,12 @@ namespace KtTest.TestDataBuilders
             return this;
         }
 
+        public ScheduledTestBuilder WithUserTests(List<UserTest> userTests)
+        {
+            this.userTests = userTests;
+            return this;
+        }
+
         public ScheduledTestBuilder IncludeUser(int userId)
         {
             userIds.Add(userId);
@@ -77,7 +91,12 @@ namespace KtTest.TestDataBuilders
 
         public ScheduledTest Build()
         {
-            return new ScheduledTest(testTemplateId, publishDate, startDate, endDate, duration, userIds);
+            if (userTests != null)
+            {
+                return new ScheduledTest(testTemplateId, publishDate, startDate, endDate, duration, userTests, scheduledTestId);
+
+            }
+            return new ScheduledTest(testTemplateId, publishDate, startDate, endDate, duration, userIds, scheduledTestId);
         }
     }
 }
