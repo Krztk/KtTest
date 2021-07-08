@@ -18,7 +18,7 @@ namespace KtTest.Models
 
         private UserTest()
         {
-
+            //ef
         }
 
         public void SetStartDate(DateTime startDate)

@@ -1,6 +1,7 @@
 ﻿using KtTest.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace KtTest.Models
 {
@@ -13,32 +14,59 @@ namespace KtTest.Models
         public DateTime PublishedAt { get; private set; }
         public DateTime StartDate { get; private set; }
         public DateTime EndDate { get; private set; }
-        public ICollection<UserTest> UserTests { get; private set; } = new List<UserTest>();
+        private readonly List<UserTest> userTests = new List<UserTest>();
+        public IReadOnlyCollection<UserTest> UserTests => userTests.AsReadOnly();
 
         public ScheduledTest(int testTemplateId,
             DateTime publishedAt,
             DateTime startDate,
             DateTime endDate,
             int duration,
-            IEnumerable<int> userIds)
+            IEnumerable<int> userIds,
+            int scheduledTestId = 0) : this(scheduledTestId, testTemplateId, publishedAt, startDate, endDate, duration)
         {
+            foreach (var userId in userIds)
+            {
+                userTests.Add(new UserTest(userId, Id));
+            }
+
+            if (userTests.Count == 0)
+                throw new ArgumentException($"{nameof(userIds)} cannot be empty collection");
+        }
+
+        public ScheduledTest(
+            int testTemplateId,
+            DateTime publishedAt,
+            DateTime startDate,
+            DateTime endDate,
+            int duration,
+            IEnumerable<UserTest> userTests,
+            int scheduledTestId) : this(scheduledTestId, testTemplateId, publishedAt, startDate, endDate, duration)
+        {
+            Id = scheduledTestId;
+            this.userTests = userTests.ToList();
+        }
+
+        private ScheduledTest(
+            int scheduledTestId,
+            int testTemplateId,
+            DateTime publishedAt,
+            DateTime startDate,
+            DateTime endDate,
+            int duration)
+        {
+            if (startDate >= endDate) throw new Exception("StartDate cannot be equal or higher than EndDate");
+
+            Id = scheduledTestId;
             TestTemplateId = testTemplateId;
             PublishedAt = publishedAt;
             StartDate = startDate;
             EndDate = endDate;
             Duration = duration;
-
-            foreach (var userId in userIds)
-            {
-                UserTests.Add(new UserTest(userId, Id));
-            }
-
-            if (UserTests.Count == 0)
-                throw new ArgumentException($"{nameof(userIds)} cannot be empty collection");
         }
-
         private ScheduledTest()
         {
+            //ef
         }
 
         public bool HasTestComeToEnd(IDateTimeProvider dateTimeProvider)
@@ -49,7 +77,7 @@ namespace KtTest.Models
             }
 
             var ended = true;
-            foreach (var userTest in UserTests)
+            foreach (var userTest in userTests)
             {
                 if (!userTest.StartDate.HasValue && dateTimeProvider.UtcNow < EndDate)
                 {

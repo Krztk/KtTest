@@ -4,6 +4,7 @@ using KtTest.Models;
 using KtTest.Services;
 using Moq;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using Xunit;
@@ -84,17 +85,14 @@ namespace KtTest.Tests.MapperTests
             var testTemplateId = 36;
             var testName = "MyTest#1";
             var questionIds = new int[] { 10, 11, 12 };
-            var testTemplate = new TestTemplate(testTemplateId, testName, 1, questionIds);
-            testTemplate.TestItems.Clear();
+            var questions = new List<Question>();
             foreach (var id in questionIds)
             {
                 var question = new Question(id, "x", new WrittenAnswer("x", 1f), 1);
-                var testTemplateItem = new TestTemplateItem.TestTemplateItemBuilder()
-                    .WithQuestion(question)
-                    .WithTestTemplate(testTemplateId)
-                    .Build();
-                testTemplate.TestItems.Add(testTemplateItem);
+                questions.Add(question);
             }
+
+            var testTemplate = new TestTemplate(testTemplateId, testName, 1, questions);
 
             var questionMapperMock = new Mock<IQuestionServiceMapper>();
             Expression<Func<IQuestionServiceMapper, Dtos.Wizard.QuestionDto>> setupExpression =

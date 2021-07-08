@@ -7,12 +7,13 @@ namespace KtTest.Models
     {
         public int Id { get; private set; }
         public string Name { get; private set; }
-        public ICollection<TestTemplateItem> TestItems { get; private set; } = new List<TestTemplateItem>();
+        private readonly List<TestTemplateItem> testItems = new List<TestTemplateItem>();
+        public IReadOnlyCollection<TestTemplateItem> TestItems => testItems.AsReadOnly();
         public int AuthorId { get; set; }
 
         private TestTemplate()
         {
-
+            //ef
         }
 
         public TestTemplate(int id, string name, int authorId, IEnumerable<int> questionIds)
@@ -21,21 +22,40 @@ namespace KtTest.Models
             Id = id;
         }
 
-        public TestTemplate(string name, int authorId, IEnumerable<int> questionIds)
+        public TestTemplate(string name, int authorId, IEnumerable<int> questionIds) : this(name, authorId)
         {
-            Name = name;
-            AuthorId = authorId;
-
             foreach (var questionId in questionIds)
             {
                 var testItem = new TestTemplateItem(questionId);
-                TestItems.Add(testItem);
+                testItems.Add(testItem);
             }
 
-            if (TestItems.Count == 0)
+            if (testItems.Count == 0)
             {
                 throw new ArgumentException($"{nameof(questionIds)} cannot be empty collection");
             }
+        }
+
+        public TestTemplate(int id, string name, int authorId, IEnumerable<Question> questions) : this(name, authorId)
+        {
+            Id = id;
+
+            foreach (var question in questions)
+            {
+                var testItem = new TestTemplateItem(question, this);
+                testItems.Add(testItem);
+            }
+
+            if (testItems.Count == 0)
+            {
+                throw new ArgumentException($"{nameof(questions)} cannot be empty collection");
+            }
+        }
+
+        private TestTemplate(string name, int authorId)
+        {
+            Name = name;
+            AuthorId = authorId;
         }
     }
 }

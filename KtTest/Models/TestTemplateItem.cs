@@ -11,12 +11,20 @@ namespace KtTest.Models
 
         private TestTemplateItem()
         {
-
+            //ef
         }
         
         public TestTemplateItem(int questionId)
         {
             QuestionId = questionId;
+        }
+
+        public TestTemplateItem(Question question, TestTemplate testTemplate)
+        {
+            Question = question;
+            QuestionId = question.Id;
+            TestTemplate = testTemplate;
+            TestTemplateId = TestTemplateId;
         }
 
         public class TestTemplateItemBuilder
@@ -25,11 +33,6 @@ namespace KtTest.Models
             private TestTemplate testTemplate;
             private int testTemplateId = 0;
             private int? questionId;
-
-            public TestTemplateItemBuilder()
-            {
-
-            }
 
             public TestTemplateItemBuilder WithQuestion(int questionId)
             {
