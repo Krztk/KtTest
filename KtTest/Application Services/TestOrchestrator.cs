@@ -1,5 +1,6 @@
 ﻿using KtTest.Dtos.Test;
 using KtTest.Dtos.Wizard;
+using KtTest.Extensions;
 using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
 using KtTest.Readers;
@@ -158,13 +159,12 @@ namespace KtTest.Application_Services
                 return new BadRequestError();
             }
 
-            var students = await groupService.GetStudentsFromGroup(publishTestDto.GroupId);
-
-            return await testService.ScheduleTest(testId,
-                publishTestDto.StartDate,
-                publishTestDto.EndDate,
-                publishTestDto.DurationInMinutes,
-                students);
+            return await groupService.GetStudentsInGroup(publishTestDto.GroupId)
+                .Then(students => testService.ScheduleTest(testId,
+                                                           publishTestDto.StartDate,
+                                                           publishTestDto.EndDate,
+                                                           publishTestDto.DurationInMinutes,
+                                                           students));
         }
     }
 }

@@ -47,8 +47,7 @@ namespace KtTest.IntegrationTests.Tests
             var groupMember = fixture.OrganizationOwnerMembers[fixture.UserId][0];
             var userToInvite = fixture.OrganizationOwnerMembers[fixture.UserId][1];
             var group = new Group("TestGroup#1", fixture.UserId);
-            group.GroupMembers.Add(new GroupMember { UserId = fixture.UserId });
-            group.GroupMembers.Add(new GroupMember { UserId = groupMember.Id});
+            group.AddMember(groupMember.Id);
             await fixture.ExecuteDbContext(x => {
                 x.Groups.Add(group);
                 return x.SaveChangesAsync();
@@ -73,9 +72,8 @@ namespace KtTest.IntegrationTests.Tests
         public async Task ShouldGetGroupMembers()
         {
             var group = new Group("TestGroup#2", fixture.UserId);
-            group.GroupMembers.Add(new GroupMember { UserId = fixture.UserId });
             var member = fixture.OrganizationOwnerMembers[fixture.UserId].First();
-            group.GroupMembers.Add(new GroupMember { UserId = member.Id });
+            group.AddMember(member.Id);
 
             await fixture.ExecuteDbContext(x => {
                 x.Groups.Add(group);
@@ -97,9 +95,8 @@ namespace KtTest.IntegrationTests.Tests
         public async Task ShouldGetAvailableUsers()
         {
             var group = new Group("TestGroup#3", fixture.UserId);
-            group.GroupMembers.Add(new GroupMember { UserId = fixture.UserId });
             var member = fixture.OrganizationOwnerMembers[fixture.UserId].First();
-            group.GroupMembers.Add(new GroupMember { UserId = member.Id });
+            group.AddMember(member.Id);
 
             await fixture.ExecuteDbContext(x => {
                 x.Groups.Add(group);
@@ -123,9 +120,8 @@ namespace KtTest.IntegrationTests.Tests
         {
             var groupName = "ShouldGetGroup#1";
             var group = new Group(groupName, fixture.UserId);
-            group.GroupMembers.Add(new GroupMember { UserId = fixture.UserId });
             var member = fixture.OrganizationOwnerMembers[fixture.UserId].First();
-            group.GroupMembers.Add(new GroupMember { UserId = member.Id });
+            group.AddMember(member.Id);
 
             await fixture.ExecuteDbContext(x => {
                 x.Groups.Add(group);

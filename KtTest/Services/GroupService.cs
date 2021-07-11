@@ -23,7 +23,6 @@ namespace KtTest.Services
         public async Task<OperationResult<int>> CreateGroup(string name)
         {
             var group = new Group(name, userContext.UserId);
-            group.GroupMembers.Add(new GroupMember { UserId = userContext.UserId });
             dbContext.Groups.Add(group);
             await dbContext.SaveChangesAsync();
             return group.Id;
@@ -38,7 +37,7 @@ namespace KtTest.Services
                 return new BadRequestError();
             }
 
-            var groupMember = new GroupMember { GroupId = groupId, UserId = userId };
+            var groupMember = new GroupMember(userId, groupId);
             dbContext.GroupMembers.Add(groupMember);
             await dbContext.SaveChangesAsync();
             return OperationResult.Ok;
@@ -51,7 +50,7 @@ namespace KtTest.Services
                 .FirstOrDefaultAsync() != null;
         }
 
-        public async Task<List<UserInfo>> GetStudentsFromGroup(int groupId)
+        public async Task<OperationResult<List<UserInfo>>> GetStudentsInGroup(int groupId)
         {
             var groupMembers = await dbContext.GroupMembers
                 .Where(x => x.GroupId == groupId)
@@ -61,6 +60,9 @@ namespace KtTest.Services
                 .ToListAsync();
 
             groupMembers.RemoveAll(x => x.IsTeacher);
+            if (groupMembers.Count == 0)
+                return new BadRequestError($"There are no students in group with id {groupId}.");
+
             return groupMembers;
         }
 

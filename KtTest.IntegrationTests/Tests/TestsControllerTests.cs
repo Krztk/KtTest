@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using KtTest.Dtos.Test;
+using KtTest.Dtos.Wizard;
 using KtTest.Infrastructure.Mappers;
 using KtTest.Models;
 using System.Collections.Generic;
@@ -78,7 +79,7 @@ namespace KtTest.IntegrationTests.Tests
                     Question = questions[0].Content,
                     Choices = questions[0]
                     .Answer.As<ChoiceAnswer>()
-                    .Choices.Select((x, i) => new ChoiceDto
+                    .Choices.Select((x, i) => new Dtos.Test.ChoiceDto
                     {
                         Value = x.Content,
                         Correct = x.Valid,
@@ -91,7 +92,7 @@ namespace KtTest.IntegrationTests.Tests
                     Question = questions[1].Content,
                     Choices = questions[1]
                     .Answer.As<ChoiceAnswer>()
-                    .Choices.Select((x, i) => new ChoiceDto
+                    .Choices.Select((x, i) => new Dtos.Test.ChoiceDto
                     {
                         Value = x.Content,
                         Correct = x.Valid,
@@ -135,6 +136,29 @@ namespace KtTest.IntegrationTests.Tests
             var responseData = await response.Content.ReadAsStringAsync();
             var result = fixture.Deserialize<List<QuestionAnswerDto>>(responseData);
             result.Should().BeEquivalentTo(expectedAnswerDtos);
+        }
+
+        [Fact]
+        public async Task ShouldntScheduleTestIfThereAreNoStudentsInTheGroup()
+        {
+            var groupWithoutStudents = new Group("Almost empty group", fixture.UserId);
+            await fixture.ExecuteDbContext(db =>
+            {
+                db.Add(groupWithoutStudents);
+                return db.SaveChangesAsync();
+            });
+
+            var dto = new PublishTestDto
+            {
+                StartDate = IntegrationTestsDateTimeProvider.utcNow.AddDays(1),
+                EndDate = IntegrationTestsDateTimeProvider.utcNow.AddDays(3),
+                GroupId = groupWithoutStudents.Id,
+                DurationInMinutes = 30
+            };
+            int testTemplateId = controllerFixture.TestTemplate.Id;
+            string bodyJson = fixture.Serialize(dto);
+            var response = await fixture.RequestSender.PostAsync($"tests/{testTemplateId}/publish", bodyJson);
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         }
     }
 }
