@@ -33,7 +33,7 @@ namespace KtTest.Services
             return test.Id;
         }
 
-        public async Task<OperationResult<bool>> CanGetTest(int testId, int studentId)
+        public async Task<OperationResult<Unit>> CanGetTest(int testId, int studentId)
         {
             var userTest = await dbContext.UserTests
                 .Where(x => x.ScheduledTestId == testId && x.UserId == studentId)
@@ -45,6 +45,14 @@ namespace KtTest.Services
             }
 
             var test = await dbContext.ScheduledTests.Where(x => x.Id == testId).FirstOrDefaultAsync();
+            if (CanGetTest(test, userTest))
+                return OperationResult.Ok;
+
+            return new BadRequestError();
+        }
+
+        private bool CanGetTest(ScheduledTest test, UserTest userTest)
+        {
             var currentDate = dateTimeProvider.UtcNow;
             if (!userTest.StartDate.HasValue)
             {

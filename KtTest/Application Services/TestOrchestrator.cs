@@ -74,25 +74,9 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<TestResultsDto>> GetTestResult(int testId)
         {
-            var hasAccess = await testService.HasUserTakenTest(testId, userContext.UserId);
-            if (!hasAccess)
-            {
-                return new AuthorizationError();
-            }
-
-            var testEndedResult = await testService.HasTestComeToEnd(testId);
-            if (!testEndedResult.Succeeded)
-            {
-                return testEndedResult.Error;
-            }
-
-            bool hasEnded = testEndedResult;
-            if (!hasEnded)
-            {
-                return new BadRequestError("Test hasn't come to end yet");
-            }
-
-            return await testReader.GetTestResultsDto(testId, userContext.UserId);
+            return await HasUserTakenTest(testId)
+                .Then(_ => HasTestComeToEnd(testId))
+                .Then(_ => testReader.GetTestResultsDto(testId, userContext.UserId));
         }
 
         public async Task<OperationResult<GroupResultsDto>> GetTestResultTeacher(int testId)
@@ -103,20 +87,11 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<Dtos.Test.TestDto>> GetTest(int id)
         {
-            var canGetTest = await testService.CanGetTest(id, userContext.UserId);
-
-            if (!canGetTest.Succeeded)
+            return await testService.CanGetTest(id, userContext.UserId).Then(async _ =>
             {
-                return canGetTest.Error;
-            }
-
-            if (!canGetTest.Data)
-            {
-                return new BadRequestError();
-            }
-
-            testService.MarkTestAsStartedIfItHasntBeenMarkedAlready(id, userContext.UserId);
-            return await testReader.GetTest(id);
+                testService.MarkTestAsStartedIfItHasntBeenMarkedAlready(id, userContext.UserId);
+                return await testReader.GetTest(id);
+            });
         }
 
         public async Task<OperationResult<Unit>> AddUserAnswers(int testId, SendTestAnswersDto dto)
@@ -136,13 +111,8 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<List<QuestionAnswerDto>>> GetUserAnswers(int testId)
         {
-            var testTaken = await testService.HasUserTakenTest(testId, userContext.UserId);
-            if (!testTaken)
-            {
-                return new BadRequestError();
-            }
-
-            return testReader.GetUserAnswers(userContext.UserId, testId);
+            return await HasUserTakenTest(testId)
+                .Then(_ => testReader.GetUserAnswers(userContext.UserId, testId));
         }
 
         public async Task<OperationResult<Unit>> ScheduleTest(int testId, PublishTestDto publishTestDto)
@@ -153,18 +123,34 @@ namespace KtTest.Application_Services
                 return new BadRequestError();
             }
 
-            bool isMember = await groupService.IsUserMemberOfGroup(userContext.UserId, publishTestDto.GroupId);
-            if (!isMember)
-            {
-                return new BadRequestError();
-            }
-
-            return await groupService.GetStudentsInGroup(publishTestDto.GroupId)
+            return await groupService.IsUserMemberOfGroup(userContext.UserId, publishTestDto.GroupId)
+                .Then(_ => groupService.GetStudentsInGroup(publishTestDto.GroupId))
                 .Then(students => testService.ScheduleTest(testId,
                                                            publishTestDto.StartDate,
                                                            publishTestDto.EndDate,
                                                            publishTestDto.DurationInMinutes,
                                                            students));
+        }
+
+        private async Task<OperationResult<Unit>> HasUserTakenTest(int testId)
+        {
+            bool testTaken = await testService.HasUserTakenTest(testId, userContext.UserId);
+            if (!testTaken)
+            {
+                return new BadRequestError();
+            }
+
+            return OperationResult.Ok;
+        }
+
+        private async Task<OperationResult<Unit>> HasTestComeToEnd(int testId)
+        {
+            bool ended = await testService.HasTestComeToEnd(testId);
+            if (!ended)
+            {
+                return new BadRequestError("Test hasn't come to end yet");
+            }
+            return OperationResult.Ok;
         }
     }
 }

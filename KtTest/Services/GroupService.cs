@@ -43,11 +43,16 @@ namespace KtTest.Services
             return OperationResult.Ok;
         }
 
-        public async Task<bool> IsUserMemberOfGroup(int userId, int groupId)
+        public async Task<OperationResult<Unit>> IsUserMemberOfGroup(int userId, int groupId)
         {
-            return await dbContext.GroupMembers
+            var groupMember = await dbContext.GroupMembers
                 .Where(x => x.UserId == userId && x.GroupId == groupId)
-                .FirstOrDefaultAsync() != null;
+                .FirstOrDefaultAsync();
+
+            if (groupMember == null)
+                return new BadRequestError();
+
+            return OperationResult.Ok;
         }
 
         public async Task<OperationResult<List<UserInfo>>> GetStudentsInGroup(int groupId)

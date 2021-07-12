@@ -39,40 +39,24 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<GroupDto>> GetGroup(int groupId)
         {
-            return await IfUserIsGroupMember(groupId, () => groupReader.GetGroup(groupId));
+            var userId = userContext.UserId;
+            return await groupService.IsUserMemberOfGroup(userId, groupId)
+                .Then(_ => groupReader.GetGroup(groupId));
         }
 
         public async Task<OperationResult<List<UserDto>>> GetGroupMembers(int groupId)
         {
-            return await IfUserIsGroupMember(groupId,
-                () => new OperationResult<List<UserDto>>(groupReader.GetGroupMembers(groupId)));
+            var userId = userContext.UserId;
+            return await groupService.IsUserMemberOfGroup(userId, groupId)
+                .Bind(_ => groupReader.GetGroupMembers(groupId));
         }
 
         public async Task<OperationResult<List<UserDto>>> GetAvailableUsers(int groupId)
         {
             var userId = userContext.UserId;
-            var groupOwnerResult = await groupService.GetIdOfGroupOwner(groupId);
-            var isMember = await groupService.IsUserMemberOfGroup(userId, groupId);
-
-            if (!isMember)
-            {
-                return new BadRequestError();
-            }
-
-            return groupOwnerResult.Bind(ownerId => groupReader.GetAvailableUsers(groupId, ownerId));
-        }
-
-        private async Task<OperationResult<TOutput>> IfUserIsGroupMember<TOutput>(int groupId, Func<OperationResult<TOutput>> func)
-        {
-            var userId = userContext.UserId;
-            var isMember = await groupService.IsUserMemberOfGroup(userId, groupId);
-
-            if (isMember)
-            {
-                return func();
-            }
-
-            return new BadRequestError();
+            return await groupService.IsUserMemberOfGroup(userId, groupId)
+                .Then(_ => groupService.GetIdOfGroupOwner(groupId))
+                .Bind(ownerId => groupReader.GetAvailableUsers(groupId, ownerId));
         }
 
         public async Task<OperationResult<int>> CreateGroup(CreateGroupDto createGroupDto)

@@ -91,5 +91,38 @@ namespace KtTest.Tests.ServiceTests
             var expectedStudentsIds = organizationMembers.Where(x => !x.IsTeacher).Select(x => x.Id);
             result.Data.Select(x => x.Id).Should().BeEquivalentTo(expectedStudentsIds);
         }
+
+        [Fact]
+        public async Task IsUserMemberOfGroup_IsMember_ReturnsSuccessfulResult()
+        {
+            //arrange
+            var group = new Group("group", userId);
+            InsertData(group);
+            var groupService = new GroupService(dbContext, userContext);
+
+            //act
+            var result = await groupService.IsUserMemberOfGroup(userId, group.Id);
+
+            //assert
+            result.Succeeded.Should().BeTrue();
+        }
+
+
+        [Fact]
+        public async Task IsUserMemberOfGroup_IsntMember_ReturnsResultWithError()
+        {
+            //arrange
+            int groupOwner = 1;
+            var group = new Group("group", groupOwner);
+            int userThatIsntMemberOfGroup = 2;
+            InsertData(group);
+            var groupService = new GroupService(dbContext, userContext);
+
+            //act
+            var result = await groupService.IsUserMemberOfGroup(userThatIsntMemberOfGroup, group.Id);
+
+            //assert
+            result.Succeeded.Should().BeFalse();
+        }
     }
 }

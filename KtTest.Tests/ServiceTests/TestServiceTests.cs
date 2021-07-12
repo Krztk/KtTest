@@ -176,7 +176,7 @@ namespace KtTest.Tests.ServiceTests
         }
 
         [Fact]
-        public async Task CanGetTest_UserHasntStartedAvailableTestYet_ReturnsResultsWithTrue()
+        public async Task CanGetTest_UserHasntStartedAvailableTestYet_ReturnsSuccessfulResult()
         {
             //arrange
             var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
@@ -200,7 +200,73 @@ namespace KtTest.Tests.ServiceTests
 
             //assert
             result.Succeeded.Should().BeTrue();
-            result.Data.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task CanGetTest_ItsToLateToStartTheTest_ReturnsResultWithError()
+        {
+            //arrange
+            var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
+            var dateTimeProdiver = new Mock<IDateTimeProvider>();
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
+            int testAuthorId = 1;
+            List<int> questionIds = SeedQuestions(testAuthorId);
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow)
+                .IncludeUser(userId)
+                .SetAsEnded()
+                .Build();
+            InsertData(scheduledTest);
+            var userContextMock = new Mock<IUserContext>();
+            userContextMock.Setup(x => x.UserId).Returns(userId);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
+
+            //act
+            var result = await service.CanGetTest(scheduledTest.Id, userId);
+
+            //assert
+            result.Succeeded.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task CanGetTest_UserNoLongerHasAccessToTestBecauseTheyExceededTestTimeLimit_ReturnsResultWithError()
+        {
+            //arrange
+            var utcNow = new DateTime(2020, 9, 5, 14, 8, 58, 0, DateTimeKind.Utc);
+            var dateTimeProdiver = new Mock<IDateTimeProvider>();
+            dateTimeProdiver.Setup(x => x.UtcNow).Returns(utcNow);
+            int testAuthorId = 1;
+            List<int> questionIds = SeedQuestions(testAuthorId);
+            var testTemplate = new TestTemplateBuilder(testAuthorId, questionIds).Build();
+            InsertData(testTemplate);
+
+            var startDate = utcNow.AddHours(-1);
+            var endDate = utcNow.AddHours(8);
+            var publishDate = utcNow.AddHours(-2);
+            var duration = 15;
+
+            var userTest = new List<UserTest>
+            {
+                new UserTestBuilder(userId).WithStartDate(startDate.AddMinutes(5)).Build(),
+            };
+
+            var scheduledTest = new ScheduledTestBuilder(testTemplate.Id, utcNow)
+                .IncludeUser(userId)
+                .WithDates(publishDate, startDate, endDate)
+                .WithDuration(duration)
+                .WithUserTests(userTest)
+                .Build();
+            InsertData(scheduledTest);
+            var userContextMock = new Mock<IUserContext>();
+            userContextMock.Setup(x => x.UserId).Returns(userId);
+            var service = new TestService(dbContext, userContext, dateTimeProdiver.Object);
+
+            //act
+            var result = await service.CanGetTest(scheduledTest.Id, userId);
+
+            //assert
+            result.Succeeded.Should().BeFalse();
         }
 
         [Fact]
