@@ -117,17 +117,30 @@ namespace KtTest.Services
             return groupResults;
         }
 
-        public void MarkTestAsStartedIfItHasntBeenMarkedAlready(int testId, int userId)
+        public OperationResult<Unit> MarkTestAsStarted(int testId, int userId)
         {
             var userTest = dbContext.UserTests.Local.FirstOrDefault(x => x.ScheduledTestId == testId && x.UserId == userId);
             if (userTest == null)
                 throw new ValueNotInTheCacheException("the userTest should already be in cache.");
 
             if (userTest.StartDate.HasValue)
-                return;
+                return new BadRequestError($"Test with id {testId} is already set as started");
 
             userTest.SetStartDate(dateTimeProvider.UtcNow);
             dbContext.SaveChanges();
+            return OperationResult.Ok;
+        }
+
+        public OperationResult<Unit> HasUserStartedTest(int testId, int userId)
+        {
+            var userTest = dbContext.UserTests.Local.FirstOrDefault(x => x.ScheduledTestId == testId && x.UserId == userId);
+            if (userTest == null)
+                throw new ValueNotInTheCacheException("the userTest should already be in cache.");
+
+            if (userTest.StartDate.HasValue)
+                return OperationResult.Ok;
+
+            return new BadRequestError($"Test with id {testId} hasn't been started yet");
         }
 
         public async Task<OperationResult<Unit>> AddUserAnswers(int testId, List<UserAnswer> userAnswers)

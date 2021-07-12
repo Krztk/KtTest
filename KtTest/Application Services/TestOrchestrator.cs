@@ -87,11 +87,15 @@ namespace KtTest.Application_Services
 
         public async Task<OperationResult<Dtos.Test.TestDto>> GetTest(int id)
         {
-            return await testService.CanGetTest(id, userContext.UserId).Then(async _ =>
-            {
-                testService.MarkTestAsStartedIfItHasntBeenMarkedAlready(id, userContext.UserId);
-                return await testReader.GetTest(id);
-            });
+            return await testService.CanGetTest(id, userContext.UserId)
+                .Then(_ => testService.HasUserStartedTest(id, userContext.UserId))
+                .Then(_ => testReader.GetTest(id));
+        }
+
+        public async Task<OperationResult<Unit>> StartTest(int testId)
+        {
+            return await testService.CanGetTest(testId, userContext.UserId)
+                .Then(_ => testService.MarkTestAsStarted(testId, userContext.UserId));
         }
 
         public async Task<OperationResult<Unit>> AddUserAnswers(int testId, SendTestAnswersDto dto)

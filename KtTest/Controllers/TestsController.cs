@@ -74,6 +74,13 @@ namespace KtTest.Controllers
             return ActionResult(result);
         }
 
+        [HttpPost("{id}/start")]
+        public async Task<IActionResult> StartTest(int id)
+        {
+            var result = await testOrchestrator.StartTest(id);
+            return ActionResult(result);
+        }
+
         [HttpPost("{id}/answers")]
         public async Task<IActionResult> SendAnswer(int id, SendTestAnswersDto sendAnswersDto)
         {
